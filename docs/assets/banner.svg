@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 240" width="100%" role="img" aria-label="ResearchFlow Banner">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="55%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="960" height="240" rx="16" fill="url(#bg)"/>
+  <rect x="1" y="1" width="958" height="238" rx="15" fill="none" stroke="#334155" stroke-width="1.5"/>
+
+  <!-- Subtle grid accent -->
+  <g stroke="#1e293b" stroke-width="1" opacity="0.6">
+    <line x1="0" y1="60" x2="960" y2="60"/>
+    <line x1="0" y1="180" x2="960" y2="180"/>
+    <line x1="160" y1="0" x2="160" y2="240"/>
+    <line x1="800" y1="0" x2="800" y2="240"/>
+  </g>
+
+  <!-- Title & Tagline -->
+  <text x="480" y="88" text-anchor="middle" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="46" font-weight="800" fill="#f8fafc" letter-spacing="-0.5">
+    Research<tspan fill="url(#accent)">Flow</tspan>
+  </text>
+
+  <text x="480" y="126" text-anchor="middle" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#cbd5e1">
+    A Host-Native Research Workspace Protocol for Evidence-Grounded AI Discovery
+  </text>
+
+  <!-- 4-Stage Pill Pipeline -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12.5" font-weight="600">
+    <rect x="88" y="156" width="172" height="36" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+    <text x="174" y="179" text-anchor="middle" fill="#e0f2fe">01 · Landscape Scope</text>
+
+    <text x="276" y="178" text-anchor="middle" fill="#64748b">→</text>
+
+    <rect x="292" y="156" width="176" height="36" rx="8" fill="#1e293b" stroke="#60a5fa" stroke-width="1.2"/>
+    <text x="380" y="179" text-anchor="middle" fill="#dbeafe">02 · 4-Angle Paper Map</text>
+
+    <text x="484" y="178" text-anchor="middle" fill="#64748b">→</text>
+
+    <rect x="500" y="156" width="176" height="36" rx="8" fill="#1e293b" stroke="#818cf8" stroke-width="1.2"/>
+    <text x="588" y="179" text-anchor="middle" fill="#e0e7ff">03 · JIT Grounded Idea</text>
+
+    <text x="692" y="178" text-anchor="middle" fill="#64748b">→</text>
+
+    <rect x="708" y="156" width="164" height="36" rx="8" fill="#1e293b" stroke="#34d399" stroke-width="1.2"/>
+    <text x="790" y="179" text-anchor="middle" fill="#d1fae5">04 · Critical Handoff</text>
+  </g>
+</svg>

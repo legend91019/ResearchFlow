@@ -11,6 +11,8 @@ def test_required_protocol_files_exist() -> None:
         "AGENTS.md",
         "CLAUDE.md",
         "README.md",
+        "docs/README_CN.md",
+        "docs/assets/banner.svg",
         "pyproject.toml",
         "scripts/cite_graph.py",
         "scripts/fetch_paper.py",
@@ -41,3 +43,10 @@ def test_skills_have_valid_yaml_frontmatter() -> None:
         header = m.group(1)
         assert f"name: {sf.parent.name}" in header
         assert "description:" in header
+
+
+def test_bilingual_readme_cross_links() -> None:
+    en_text = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    cn_text = (REPO_ROOT / "docs/README_CN.md").read_text(encoding="utf-8")
+    assert "docs/README_CN.md" in en_text
+    assert "../README.md" in cn_text
