@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.pytest_tmp/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Environment & OS
+.env
+.env.*
+.DS_Store
+Thumbs.db
+
+# Active research workspaces (keep directory placeholder only)
+workspaces/*
+!workspaces/.gitkeep
