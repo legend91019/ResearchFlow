@@ -140,3 +140,13 @@ def test_cli_writes_markdown_and_json(tmp_path: Path, monkeypatch) -> None:
     assert md_out.exists()
     payload = json.loads(json_out.read_text(encoding="utf-8"))
     assert payload["seed"]["title"] == "Seed Paper"
+
+
+def test_before_date_strips_future_papers() -> None:
+    nodes = [
+        PaperNode(title="Prior 2024", year=2024, arxiv_id="2404.00228", published_date="2024-04-01"),
+        PaperNode(title="Future by date", year=2026, arxiv_id="2609.00001", published_date="2026-10-06"),
+        PaperNode(title="Future by arXiv YYMM", year=2026, arxiv_id="2611.30102"),
+    ]
+    kept = deduplicate_nodes(nodes, before_date="2026-10-01")
+    assert [n.title for n in kept] == ["Prior 2024"]

@@ -15,7 +15,7 @@ description: Stage 2 of ResearchFlow Ideation. Executes 4-angle deep search (lon
 
 | 搜索视角 | 具体执行方式 | 核心目的 |
 | :--- | :--- | :--- |
-| **1. 纵向演化搜索** | 对 `01_scope.md` 中的每篇种子论文运行 `python scripts/cite_graph.py <id> --direction both --limit 50 --out ... --json-out ...`，并结合近期 Web Search 补齐 API 尚未收录的新预印本 | 理清该线路如何从早期 `A` → 中期 `B` → 近 1 年最新工作 `C` 逐步演进，防撞车 |
+| **1. 纵向演化搜索** | 对 `01_scope.md` 中的每篇种子论文运行 `python scripts/cite_graph.py <id> --direction both --limit 50 --out ... --json-out ...`（若 `01_scope.md` 设有时间截断 `YYYY-MM-DD`，必须附加 `--before-date YYYY-MM-DD`），并结合 Web Search 补齐 API 未收录预印本（回测模式下严禁读取或纳入截断日及之后的文献与仓库） | 理清该线路如何从早期 `A` → 中期 `B` → 近 1 年最新工作 `C` 逐步演进，防撞车 |
 | **2. 横向路线搜索** | 用宿主 Web Search 检索**同一任务设定下采用其他技术路线**的近期代表性高水平工作（2–4 篇） | 看清本路线在全局坐标系中的真实优劣，避免局部视野盲区 |
 | **3. 相邻机制搜索** | 剥离当前业务名词，提炼底层数学/优化/系统机制关键词（如子空间投影、谱门控、校准漂移等），检索相邻子领域的同构分析工作 | 识别潜在混杂机制（如步长缩放效应）或可借鉴工具 |
 | **4. 反证与失效搜索（必做）** | 专门组合 `rethinking`、`revisiting`、`limitations`、`failure`、`instability`、`reproduction`、`when does ... fail` 等词检索 arXiv / OpenReview / Web | 在投入算力前，查明是否已有研究证明该路线存在伪增益、超参脆弱性或更平庸的替代解释 |

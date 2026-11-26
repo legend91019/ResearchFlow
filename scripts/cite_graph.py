@@ -24,7 +24,7 @@ import urllib.request
 USER_AGENT = "ResearchFlow/0.1 (Academic Research Workspace Protocol)"
 S2_BASE = "https://api.semanticscholar.org/graph/v1"
 OA_BASE = "https://api.openalex.org"
-S2_FIELDS = "paperId,title,year,venue,citationCount,externalIds,url,abstract,authors"
+S2_FIELDS = "paperId,title,year,publicationDate,venue,citationCount,externalIds,url,abstract,authors"
 
 _ARXIV_NEW_RE = re.compile(r"(?:arxiv[:/]|abs/|pdf/)?(\d{4}\.\d{4,5})(?:v\d+)?(?:\.pdf)?$", re.I)
 _ARXIV_OLD_RE = re.compile(r"(?:arxiv[:/]|abs/|pdf/)?([a-z-]+/\d{7})(?:v\d+)?(?:\.pdf)?$", re.I)
@@ -47,6 +47,7 @@ class PaperNode:
     url: str = ""
     authors: list[str] = field(default_factory=list)
     abstract: str = ""
+    published_date: str = ""
     sources: list[str] = field(default_factory=list)
 
     def primary_id(self) -> str:
@@ -160,6 +161,7 @@ def _node_from_s2(raw: dict[str, Any]) -> PaperNode | None:
         url=url,
         authors=authors[:8],
         abstract=str(raw.get("abstract") or "").strip(),
+        published_date=str(raw.get("publicationDate") or "").strip()[:10],
         sources=["semantic_scholar"],
     )
 
@@ -204,11 +206,47 @@ def _node_from_openalex(raw: dict[str, Any]) -> PaperNode | None:
         url=url,
         authors=authors[:8],
         abstract=_reconstruct_abstract(raw.get("abstract_inverted_index")),
+        published_date=str(raw.get("publication_date") or "").strip()[:10],
         sources=["openalex"],
     )
 
 
-def deduplicate_nodes(nodes: list[PaperNode], *, year_min: int = 0) -> list[PaperNode]:
+def _arxiv_date_floor(arxiv_id: str) -> str:
+    """Infer 'YYYY-MM-01' lower-bound date from modern YYMM.NNNNN arXiv IDs when exact date is absent."""
+    m = re.match(r"^(\d{2})(\d{2})\.\d{4,5}", arxiv_id.strip())
+    if not m:
+        return ""
+    yy, mm = int(m.group(1)), int(m.group(2))
+    if 1 <= mm <= 12:
+        year = 2000 + yy if yy < 90 else 1900 + yy
+        return f"{year:04d}-{mm:02d}-01"
+    return ""
+
+
+def _is_on_or_after_cutoff(node: PaperNode, *, year_max: int, before_date: str) -> bool:
+    if year_max > 0 and node.year and node.year > year_max:
+        return True
+    if before_date:
+        cutoff_year = int(before_date[:4])
+        if node.year and node.year > cutoff_year:
+            return True
+        if node.published_date and node.published_date >= before_date:
+            return True
+        inferred = _arxiv_date_floor(node.arxiv_id)
+        if inferred and inferred >= before_date[:7] + "-01" and (
+            inferred[:7] > before_date[:7] or before_date.endswith("-01")
+        ):
+            return True
+    return False
+
+
+def deduplicate_nodes(
+    nodes: list[PaperNode],
+    *,
+    year_min: int = 0,
+    year_max: int = 0,
+    before_date: str = "",
+) -> list[PaperNode]:
     """Merge duplicate PaperNodes across providers by arXiv ID -> DOI -> normalized title."""
     merged: list[PaperNode] = []
     by_arxiv: dict[str, int] = {}
@@ -217,6 +255,8 @@ def deduplicate_nodes(nodes: list[PaperNode], *, year_min: int = 0) -> list[Pape
 
     for node in nodes:
         if year_min > 0 and node.year and node.year < year_min:
+            continue
+        if _is_on_or_after_cutoff(node, year_max=year_max, before_date=before_date):
             continue
         idx: int | None = None
         ak = node.arxiv_id.lower()
@@ -325,6 +365,7 @@ def _fetch_openalex_graph(
     direction: str,
     limit: int,
     email: str,
+    before_date: str = "",
     fetcher: JsonFetcher,
 ) -> tuple[PaperNode | None, list[PaperNode], list[PaperNode], list[str]]:
     warnings: list[str] = []
@@ -378,12 +419,16 @@ def _fetch_openalex_graph(
     if direction in {"both", "citations"}:
         # Dual-bucket citation query: recent-first + influential-first so 0-citation new papers are never buried.
         per_bucket = max(10, (limit + 1) // 2)
+        cite_filter = f"cites:{work_short_id}"
+        if before_date:
+            # OpenAlex to_publication_date is inclusive; filtering >= before_date happens again in deduplicate_nodes.
+            cite_filter += f",to_publication_date:{before_date}"
         for sort_rule in ("publication_year:desc", "cited_by_count:desc"):
             try:
                 cite_data = fetcher(
                     _oa_url(
                         "/works",
-                        {"filter": f"cites:{work_short_id}", "sort": sort_rule, "per-page": min(per_bucket, 50)},
+                        {"filter": cite_filter, "sort": sort_rule, "per-page": min(per_bucket, 50)},
                         email,
                     ),
                     {},
@@ -425,11 +470,15 @@ def build_citation_graph(
     direction: str = "both",
     limit: int = 40,
     year_min: int = 0,
+    year_max: int = 0,
+    before_date: str = "",
     s2_api_key: str = "",
     openalex_email: str = "",
     fetcher: JsonFetcher | None = None,
 ) -> dict[str, Any]:
     """Query S2 and OpenAlex, deduplicate, and return structured citation graph."""
+    if before_date and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", before_date):
+        raise ValueError(f"--before-date must use YYYY-MM-DD format, got {before_date!r}")
     if fetcher is None:
         fetcher = default_http_json
     kind, value = ("title", identifier.strip()) if is_title else parse_identifier(identifier)
@@ -465,7 +514,13 @@ def build_citation_graph(
         )
         try:
             oa_seed, oa_refs, oa_cites, oa_warn = _fetch_openalex_graph(
-                oa_kind, oa_val, direction=direction, limit=limit, email=openalex_email, fetcher=fetcher
+                oa_kind,
+                oa_val,
+                direction=direction,
+                limit=limit,
+                email=openalex_email,
+                before_date=before_date,
+                fetcher=fetcher,
             )
             warnings.extend(oa_warn)
             if oa_seed:
@@ -479,8 +534,8 @@ def build_citation_graph(
         raise RuntimeError(f"Could not resolve seed paper {identifier!r}. Warnings: {'; '.join(warnings)}")
 
     merged_seed = deduplicate_nodes(seeds)[0]
-    refs = deduplicate_nodes(raw_refs, year_min=year_min)
-    cites = deduplicate_nodes(raw_cites, year_min=year_min)
+    refs = deduplicate_nodes(raw_refs, year_min=year_min, year_max=year_max, before_date=before_date)
+    cites = deduplicate_nodes(raw_cites, year_min=year_min, year_max=year_max, before_date=before_date)
 
     refs.sort(key=lambda n: (n.year, n.citation_count), reverse=True)
     selected_refs = refs[:limit]
@@ -488,7 +543,15 @@ def build_citation_graph(
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "query": {"input": identifier, "kind": kind, "normalized": value, "direction": direction, "year_min": year_min},
+        "query": {
+            "input": identifier,
+            "kind": kind,
+            "normalized": value,
+            "direction": direction,
+            "year_min": year_min,
+            "year_max": year_max,
+            "before_date": before_date,
+        },
         "seed": asdict(merged_seed),
         "references": [asdict(n) for n in selected_refs],
         "citations": [asdict(n) for n in selected_cites],
@@ -551,6 +614,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--direction", choices=("both", "references", "citations"), default="both")
     parser.add_argument("--limit", type=int, default=40, help="Max papers per direction (default: 40)")
     parser.add_argument("--year-min", type=int, default=0, help="Minimum publication year filter")
+    parser.add_argument("--year-max", type=int, default=0, help="Maximum publication year filter")
+    parser.add_argument("--before-date", default="", help="Strict exclusive cutoff date YYYY-MM-DD for backtesting")
     parser.add_argument("--with-abstracts", action="store_true", help="Include abstract snippets in Markdown")
     parser.add_argument("--out", default="", help="Write Markdown report to file path")
     parser.add_argument("--json-out", default="", help="Write structured JSON payload to file path")
@@ -569,6 +634,8 @@ def main(argv: list[str] | None = None) -> int:
         direction=args.direction,
         limit=max(1, args.limit),
         year_min=max(0, args.year_min),
+        year_max=max(0, args.year_max),
+        before_date=args.before_date.strip(),
         s2_api_key=s2_key,
         openalex_email=oa_email,
     )

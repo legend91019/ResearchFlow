@@ -17,8 +17,9 @@ description: Stage 4 of ResearchFlow Ideation. Launches a history-isolated Criti
 
 ### 信息隔离要求（防确认偏误）
 - **只允许提供给 Reviewer 的材料**：
-  1. `03_idea_discussion.md` 中“当前研究问题”、“已验证事实”、“当前工作假设”与“当前候选 Idea”四个客观段落；
-  2. 所依赖的 `Direct Baseline` 及关键相关论文在 `papers/<slug>/` 下的 `notes.md`、`index.md` 与 `source/`、`repo/` 路径。
+  1. `01_scope.md` 中的算力边界与时间截断约束（若处于 `--before-date YYYY-MM-DD` 历史回测模式，Reviewer 检索引擎与 `cite_graph.py` 同样必须严格截断在该日期之前，严禁检索或引用截断日及之后的文献）；
+  2. `03_idea_discussion.md` 中“当前研究问题”、“已验证事实”、“当前工作假设”与“当前候选 Idea”四个客观段落；
+  3. 所依赖的 `Direct Baseline` 及关键相关论文在 `papers/<slug>/` 下的 `notes.md`、`index.md` 与 `source/`、`repo/` 路径。
 - **严禁向 Reviewer 传入**：此前主对话里双方的妥协过程、说服话术或主观偏好。
 
 ### Reviewer 必须独立完成的五项核查任务
