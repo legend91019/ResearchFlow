@@ -32,10 +32,11 @@
 
 ## 🔥 News
 
-- **[2026-11] `v0.1.0` Initial Release** — Launching **ResearchFlow** with the complete **Phase I: Evidence-Grounded Ideation & Literature Mapping** workspace protocol:
-  - Root epistemic constitution ([`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md)) enforcing 4-way evidence separation and `Explore / Challenge / Refine / Pivot` dialogue control;
-  - 4 modular stage skills ([`skills/`](skills/)) loaded on demand to prevent context bloat;
-  - 2 zero-dependency deterministic Python utilities: [`cite_graph.py`](scripts/cite_graph.py) (Semantic Scholar + OpenAlex bidirectional citation graph) and [`fetch_paper.py`](scripts/fetch_paper.py) (unmodified arXiv LaTeX unpacker, `\input` topology & line-range indexer, and official repo cloner).
+- **[2026-11] `v0.2.0` Ideation Hardening Release** — Upgraded retrieval, anti-accretion ideation, and falsification review based on 4-domain backtest & postmortem diagnostics:
+  - **Zero-Blind-Spot Retrieval ([`cite_graph.py`](scripts/cite_graph.py))**: Dual-provider S2 + OpenAlex merge with **3-tier temporal balancing** (latest preprints `C` + 1–2 year venue backbone `B_recent` + foundational classics `B_early`), **`--scan-bib`** zero-API 2-hop local `.bib` co-citation radar, **`--arxiv-recent`** zero-lag preprint stream, and **`--before-date`** temporal cutoffs for leak-free retrospective backtesting;
+  - **Anti-Accretion Ideation ([`idea-stage3-ideation`](skills/idea-stage3-ideation/SKILL.md))**: Enforces a 1–2 tightly coupled primitive complexity cap, separates clean baseline bugfixes from core scientific claims, and triggers mandatory search-back whenever new sub-mechanisms are introduced;
+  - **Coupled Falsification & Pilot-First Handoff ([`idea-stage4-review-handoff`](skills/idea-stage4-review-handoff/SKILL.md), [`04_handoff.md`](templates/04_handoff.md))**: Adds minimum-novel-core peeling, elementary-baseline dominance checks, end-to-end coupled state-machine Python simulations, and a **`Gate 0` (1–3h Pilot Falsification Test with Go/No-Go thresholds)** ahead of the full Main Table.
+- **[2026-11] `v0.1.0` Initial Release** — Launching **ResearchFlow** with the **Phase I: Evidence-Grounded Ideation & Literature Mapping** workspace protocol.
 
 ---
 
@@ -129,31 +130,33 @@ ResearchFlow structures early-stage research into four progressive stages, each 
 - **Output**: `01_scope.md` (strictly locks the **problem space and lineage branch**, never pre-committing to a premature algorithm).
 
 ### Stage 2 — 4-Angle Deep Search & Dynamic `L0–L3` Paper Map ([`idea-stage2-literature-map`](skills/idea-stage2-literature-map/SKILL.md))
-Instead of staying trapped inside one citation clique, the `Deep Search Subagent` is required to retrieve across **four orthogonal angles**:
-1. **Longitudinal (`cite_graph.py` + Web)**: Backward references and forward citations balanced between **high-impact intermediate milestones (`B`)** and **0-citation recent preprints (`C`)** to reconstruct the full `A → B → C` trajectory.
-2. **Lateral**: Competing technical paradigms tackling the same task setting.
-3. **Mechanistic**: Analogous mathematical or optimization operators in adjacent subfields.
+Instead of staying trapped inside one citation clique, the `Deep Search Subagent` is required to retrieve across **four orthogonal angles** plus a local 2-hop `.bib` radar:
+1. **Longitudinal + Zero-Lag Stream (`cite_graph.py`)**: S2 + OpenAlex 3-tier balanced citations (0-citation preprints `C` + recent venue backbone `B_recent` + foundational milestones `B_early`) paired with `--arxiv-recent` to catch 24–72h preprints before web indexers ingest them.
+2. **Lateral**: Competing technical paradigms across `arXiv`, `OpenReview` (including Workshops), and `ACL/CVF` proceedings.
+3. **Mechanistic & Dual Operators**: Analogous or inverse mathematical operators in adjacent subfields (e.g., 1-to-$N$ split relocation vs. $N$-to-1 merge absorption).
 4. **Counter-Evidence (Mandatory)**: Negative results, reproduction failures, hyperparameter sensitivity studies, and critiques (`rethinking`, `revisiting`, `limitations`, `instability`).
+5. **Local 2-Hop Co-Citation Radar (`--scan-bib`)**: Scans unpacked `papers/*/source/*.bib` files at zero API cost to surface unarchived papers frequently co-cited by frontier works.
 
 Selected papers (typically 15–25) are read by parallel `Paper Reader Subagents` at dynamically upgradable depths:
-- **`L0` Screened** → **`L1` Mechanism & Main Table** → **`L2` Full Text, Proofs & Appendix** → **`L3` Official Codebase Audit** (`repo/` commit-pinned, verifying whether actual code matches paper equations or hides undocumented tricks).
+- **`L0` Screened** → **`L1` Mechanism & Main Table** → **`L2` Full Text, Proofs & Appendix** (mandatory for close recent competitors) → **`L3` Official Codebase Audit** (`repo/` commit-pinned, verifying whether actual code matches paper equations or hides undocumented tricks).
 - **Direct Baselines (strictly 1–3 papers)** must be solid, open-source, recognized, and recent.
-- **Output**: `02_paper_map.md` + per-paper `papers/<slug>/notes.md` + `search_logs/stage2_search_audit.md`.
+- **Output**: Non-strawman `02_paper_map.md` + per-paper `papers/<slug>/notes.md` + `search_logs/stage2_search_audit.md`.
 
-### Stage 3 — JIT Source-Tethered Ideation & Assumption Challenging ([`idea-stage3-ideation`](skills/idea-stage3-ideation/SKILL.md))
-- Guided by three natural scientific lenses (not rigid procedural forms): **Lineage & Confound Disentanglement**, **Direct-Baseline Code Surgery**, and **Optional Cross-Domain Mechanism Transfer**.
-- Whenever equations, theorem conditions, or code modules are discussed, the host agent consults `papers/<slug>/index.md` and loads exact **40–120 line slices** from `source/` or `repo/`. If an `L1` paper suddenly becomes load-bearing, it is dynamically upgraded to `L2/L3`.
-- Explicitly tracks **`Explore`** (compare without pivoting), **`Challenge`** (audit uncontrolled confounders immediately without defending flawed premises), **`Refine`**, and **`Pivot`**.
-- **Output**: `03_idea_discussion.md` (cleanly separating *Verified Facts*, *Working Assumptions*, *Current Candidate*, and *Ruled-Out Ideas*).
+### Stage 3 — Parsimonious Source-Tethered Ideation ([`idea-stage3-ideation`](skills/idea-stage3-ideation/SKILL.md))
+- Guided by three natural scientific lenses: **Literature Conflict & Confound Resolution**, **Direct-Baseline Code Surgery**, and **Optional Cross-Domain Mechanism Transfer**.
+- **Anti-Accretion Complexity Budget**: Separates prior-repo bugfixes (`Baseline-Clean`) from core novelty, caps core mechanisms at **1–2 tightly coupled primitives** (no 4-module patchwork), and mandates an immediate **component search-back** (`Web + --scan-bib --keyword`) whenever a new sub-mechanism is introduced.
+- Whenever equations, theorem conditions, or code modules are discussed, the host agent consults `papers/<slug>/index.md` and loads exact **40–120 line slices** from `source/` or `repo/`.
+- Explicitly tracks **`Explore`**, **`Challenge`**, **`Refine`**, and **`Pivot`**.
+- **Output**: `03_idea_discussion.md` (cleanly separating *Verified Facts*, *Working Assumptions*, *Clean-Baseline Prerequisites vs. Core Mechanism*, and *Ruled-Out / Pruned Modules*).
 
-### Stage 4 — History-Isolated Critical Review & Main-Table Handoff ([`idea-stage4-review-handoff`](skills/idea-stage4-review-handoff/SKILL.md))
-- **Blind Falsification Check**: Spawns a fresh `Critical Reviewer Subagent` with **zero access to the prior persuasion chat**, feeding only the candidate specification and raw `papers/` evidence to answer five hard questions:
-  1. *Has an equivalent mechanism already been published (cross-terminology arXiv / OpenReview scoop check)?*
-  2. *Does the claimed baseline flaw actually exist in the original `source/` and `repo/`?*
-  3. *Is there a simpler, trivial explanation for any expected gain (e.g., implicit step-size reduction, extra parameter/memory budget)?*
-  4. *Can the proposed experiments genuinely falsify the hypothesis within the user's compute budget?*
-  5. *Where is the mechanism most likely to fail mathematically or empirically?*
-- **Consensus Experimental Handoff**: Exports `04_handoff.md` with exact equation/code modification coordinates and **literature-grounded Main Table settings** (benchmarks, metrics, and a balanced baseline roster covering foundational classics + 1–3 direct baselines + last-12-month frontier methods).
+### Stage 4 — Coupled Falsification Review & Pilot-First Handoff ([`idea-stage4-review-handoff`](skills/idea-stage4-review-handoff/SKILL.md))
+- **Blind Falsification Check**: Spawns a single history-isolated `Critical Reviewer Subagent` with **zero access to prior persuasion chat**, executing five sharp checks:
+  1. *Minimum Novel Core & `L2` Theorem/Appendix Scoop Check* (`--arxiv-recent` + `--scan-bib` + OpenReview; strips borrowed wrappers to test whether the remaining core is genuinely novel rather than an `A+B+C` patchwork);
+  2. *Premise, Proxy-Gap & Anti-Strawman Audit* against original `source/`, `repo/`, and `notes.md`;
+  3. *Elementary Dominance & Confound Check* (verifying complex math does not degenerate into a 2-line elementary closed form like a hypergeometric test or simple damping, and checking iso-norm / iso-plasticity controls);
+  4. *End-to-End Coupled State-Machine Simulation* (writing a Python script to test conditional gate selection bias, unobserved sparse-audit steps, competing thresholds, and analytical corner cases);
+  5. *Statistical Exchangeability (`IID` vs. `OOD`) & Pilot Falsifiability*.
+- **Two-Stage Experimental Handoff (`04_handoff.md`)**: Exports multi-dimensional readiness status, **`Gate 0` (a 1–3 hour Pilot Falsification Test with explicit Go/No-Go thresholds)**, and **literature-grounded Main Table settings** activated once `Gate 0` passes.
 
 ---
 
@@ -202,7 +205,7 @@ Please create workspaces/cl_peft and start Stage 1 landscape research.
 
 #### Option B: Start from 1–3 Seed Papers (Fast-Track to Stage 2)
 ```text
-I want to investigate orthogonal subspace methods in continual PEFT, starting from O-LoRA (arXiv:2310.06762)
+I want to investigate orthogonal subspace methods in continual PEFT, starting from O-LoRA (arXiv:2310.14152)
 and InfLoRA (arXiv:2404.00228). Compute limit: single RTX 4090.
 Initialize workspaces/ortho_cl and jump directly into Stage 2 4-angle deep search and paper mapping.
 ```
@@ -258,17 +261,23 @@ Sample excerpt from an auto-generated `papers/<slug>/index.md`:
 
 Both helper scripts under [`scripts/`](scripts/) can also be run standalone from any terminal:
 
-### 1. `scripts/cite_graph.py` — Resilient Bidirectional Citation Graph
-Queries **Semantic Scholar** and **OpenAlex** with cross-provider deduplication (DOI → arXiv ID → normalized title). If Semantic Scholar rate-limits unauthenticated requests (`HTTP 429`), OpenAlex automatically takes over while logging explicit diagnostics. Forward citations use **balanced milestone (`B`) + latest frontier (`C`) bucketing** so neither seminal follow-ups nor 0-citation recent preprints get crowded out.
+### 1. `scripts/cite_graph.py` — 3-Tier Citation Graph, Local `.bib` Radar & Zero-Lag arXiv Stream
+Merges **Semantic Scholar** and **OpenAlex** with 3-tier temporal balancing (latest preprints `C` + 1–2 year venue backbone `B_recent` + foundational classics `B_early`) and optional `--before-date YYYY-MM-DD` cutoffs for retrospective backtesting. Also provides `--scan-bib` (zero-API 2-hop co-citation scan over downloaded `.bib` files) and `--arxiv-recent` (direct `export.arxiv.org` preprint stream).
 
 ```bash
-python scripts/cite_graph.py 2310.06762 \
+# 1) Bidirectional 3-tier citation graph
+python scripts/cite_graph.py 2310.14152 \
   --direction both \
   --limit 40 \
-  --year-min 2022 \
   --with-abstracts \
   --out workspaces/demo/search_logs/olora_graph.md \
   --json-out workspaces/demo/search_logs/olora_graph.json
+
+# 2) Zero-API 2-hop co-citation scan across local papers/*/source/*.bib
+python scripts/cite_graph.py --scan-bib workspaces/demo --keyword "subspace|spectral" --limit 25
+
+# 3) Zero-lag arXiv stream for the last 30 days
+python scripts/cite_graph.py --arxiv-recent "continual learning lora" --categories "cs.LG,cs.CL" --days 30
 ```
 
 ### 2. `scripts/fetch_paper.py` — Lossless Source Unpacker & Line-Range Indexer
@@ -314,13 +323,13 @@ ResearchFlow/
 
 ResearchFlow is being developed progressively across the four stages of the AI research lifecycle:
 
-- [x] **Phase I — Evidence-Grounded Ideation & Literature Mapping (`v0.1`)**
-  - Survey-first taxonomy scoping, 4-angle deep search with counter-evidence, unmodified LaTeX indexing, `Explore / Challenge / Refine / Pivot` dialogue control, and blind `Critical Reviewer` handoff.
-- [ ] **Phase II — Consensus Experimental & Diagnostic Protocol Design (`v0.2`)**
-  - Translating `04_handoff.md` and `02_paper_map.md` into fair, confound-controlled experimental matrices, ablation designs, and pre-flight verification checks.
-- [ ] **Phase III — Budget-Aware Execution & Fault-Tolerant Diagnostics (`v0.3`)**
+- [x] **Phase I — Evidence-Grounded Ideation & Literature Mapping (`v0.1`–`v0.2`)**
+  - Survey-first taxonomy scoping, 3-tier citation graph + `.bib` co-citation radar + zero-lag arXiv stream, anti-accretion ideation, coupled numerical falsification review, and `Gate 0` pilot-first handoff.
+- [ ] **Phase II — Consensus Experimental & Diagnostic Protocol Design (`v0.3`)**
+  - Translating `04_handoff.md` and `02_paper_map.md` into `Gate 0` pilot runners, confound-controlled experimental matrices, ablation designs, and pre-flight verification checks.
+- [ ] **Phase III — Budget-Aware Execution & Fault-Tolerant Diagnostics (`v0.4`)**
   - Deterministic training/evaluation harnesses, compute budget guards, checkpointed queues, and implementation fidelity audits.
-- [ ] **Phase IV — Result Analysis, Scientific Visualization & Evidence-Bound Writing (`v0.4`)**
+- [ ] **Phase IV — Result Analysis, Scientific Visualization & Evidence-Bound Writing (`v0.5`)**
   - Counterfactual analysis, publication-grade plotting, and manuscript generation strictly bound to verified metrics and primary sources.
 
 ---

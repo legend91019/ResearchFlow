@@ -50,3 +50,18 @@ def test_bilingual_readme_cross_links() -> None:
     cn_text = (REPO_ROOT / "docs/README_CN.md").read_text(encoding="utf-8")
     assert "docs/README_CN.md" in en_text
     assert "../README.md" in cn_text
+
+
+def test_v02_anti_accretion_and_pilot_handoff_invariants() -> None:
+    agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    s2 = (REPO_ROOT / "skills/idea-stage2-literature-map/SKILL.md").read_text(encoding="utf-8")
+    s3 = (REPO_ROOT / "skills/idea-stage3-ideation/SKILL.md").read_text(encoding="utf-8")
+    s4 = (REPO_ROOT / "skills/idea-stage4-review-handoff/SKILL.md").read_text(encoding="utf-8")
+    t4 = (REPO_ROOT / "templates/04_handoff.md").read_text(encoding="utf-8")
+
+    assert "奥卡姆剃刀" in agents
+    assert "--scan-bib" in s2 and "--arxiv-recent" in s2
+    assert "Mandatory Component Search-Back" in s3
+    assert "Minimum Novel Core" in s4 and "Coupled Simulation" in s4
+    assert "READY_FOR_PILOT" in s4 and "NEEDS_SIMPLIFICATION" in s4
+    assert "Gate 0" in t4 and "Go / No-Go" in t4

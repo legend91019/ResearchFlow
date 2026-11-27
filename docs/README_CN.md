@@ -32,10 +32,11 @@
 
 ## 🔥 最新动态
 
-- **[2026-11] `v0.1.0` 正式发布** — 推出 **ResearchFlow** 第一阶段（**实证型 Idea 讨论与文献建图协议**）：
-  - 全局科研认识论宪法（[`AGENTS.md`](../AGENTS.md) / [`CLAUDE.md`](../CLAUDE.md)），强制执行“证据四分法”与 `Explore / Challenge / Refine / Pivot` 四态讨论控制；
-  - 4 个按阶段按需加载的模块化科研技能（[`skills/`](../skills/)），彻底避免多阶段提示词撑爆上下文；
-  - 2 个零第三方强依赖的确定性 Python 工具：[`cite_graph.py`](../scripts/cite_graph.py)（Semantic Scholar + OpenAlex 双源容错双向引文网络）与 [`fetch_paper.py`](../scripts/fetch_paper.py)（arXiv 原始 LaTeX 无损解包、多文件 `\input` 拓扑与行号索引生成、官方代码仓浅克隆）。
+- **[2026-11] `v0.2.0` Idea 阶段深度加固版发布** — 基于跨 4 个子领域的时序回测与根因取证复盘，全面升级检索召回、极简构思预算与级联反证机制：
+  - **零盲区文献雷达（[`cite_graph.py`](../scripts/cite_graph.py)）**：修复截断前短路问题并升级为 S2 + OpenAlex **三桶时间均衡召回**（最新预印本 `C` + 近 1–2 年顶会中坚 `B_recent` + 奠基经典 `B_early`），新增 **`--scan-bib` 本地 `.bib` 二跳共引雷达**（零 API 开销抓出高频漏网文献）、**`--arxiv-recent` 零延迟预印本流**（绕过 48 小时索引滞后）及 `--before-date` 严格回测时间锁；
+  - **奥卡姆反拼盘构思约束（[`idea-stage3-ideation`](../skills/idea-stage3-ideation/SKILL.md)）**：强制剥离“基线修 Bug”与“核心科学贡献”，严控核心机制在 1–2 个紧耦合原语内，且每引入新算子强制触发回跳查重；
+  - **级联数值反证与 `Gate 0` 先导优先交接（[`idea-stage4-review-handoff`](../skills/idea-stage4-review-handoff/SKILL.md)、[`04_handoff.md`](../templates/04_handoff.md)）**：升级最小创新核剥离、初等闭式方法占优检验与跨模块级联 Python 状态机仿真，并在全量主实验前增设 **单卡 1–3 小时 `Gate 0` 生死先导实验（附量化 Go/No-Go 门槛）**。
+- **[2026-11] `v0.1.0` 正式发布** — 推出 **ResearchFlow** 第一阶段（**实证型 Idea 讨论与文献建图协议**）。
 
 ---
 
@@ -129,31 +130,33 @@ ResearchFlow 将科研前期的构思过程划分为四个递进阶段，每个�
 - **阶段产物**：`01_scope.md`（锁定**问题空间与演化分支**，绝不在此刻预设具体新算法）。
 
 ### 阶段 2 — 四视角深搜与动态 `L0–L3` 论文地图（[`idea-stage2-literature-map`](../skills/idea-stage2-literature-map/SKILL.md)）
-为避免陷入单一引文小圈子，`Deep Search Subagent` 必须覆盖**四个正交搜索视角**：
-1. **纵向演化搜索（`cite_graph.py` + Web）**：拉取种子论文的双向引文网，前向施引采用**高引里程碑 `B` + 零引用最新工作 `C` 双桶均衡筛选**，完整还原 `A → B → C` 时间线并防撞车。
-2. **横向路线搜索**：检索同一任务设定下采用其他技术流派的代表性工作。
-3. **相邻机制搜索**：剥离业务包装词，检索相邻子领域中的同构数学/优化机制。
+为避免陷入单一引文小圈子，`Deep Search Subagent` 必须覆盖**四个正交搜索视角**与本地二跳共引扫描：
+1. **纵向演化 + 零延迟流（`cite_graph.py`）**：S2 + OpenAlex **三桶时间均衡施引**（零引用最新预印本 `C` + 近 1–2 年顶会中坚 `B_recent` + 奠基高引 `B_early`），配合 `--arxiv-recent` 直拉近 30 天预印本，消除搜索引擎索引滞后。
+2. **横向路线与多渠道搜索**：覆盖 `arXiv`、`OpenReview`（含 Workshop）与 `ACL / CVF` 论文集，并列同义动作词防漏检。
+3. **相邻与对偶机制搜索**：剥离业务包装词，同时检索正向与逆向对偶数学算子（如分裂重定位 $\leftrightarrow$ 合并吸收）。
 4. **反证与失效搜索（必做）**：专门检索负面结论、复现质疑、超参敏感性与失效边界分析（`rethinking`、`revisiting`、`limitations`、`instability`）。
+5. **本地 `.bib` 二跳共引雷达（`--scan-bib`）**：零 API 开销扫描已解包论文的 `.bib`，自动揪出被多篇前沿论文共同引用却尚未入库的关键文献。
 
 对入选的 15–25 篇文献执行可动态升档的分级阅读（`Paper Reader Subagent`）：
-- **`L0` 相关性筛查** → **`L1` 核心机制与主表** → **`L2` 全文推导与附录深读** → **`L3` 官方代码仓实现审计**（锁定 commit，核查代码实际实现是否与论文公式一致、有无隐藏工程 trick）。
+- **`L0` 相关性筛查** → **`L1` 核心机制与主表** → **`L2` 全文推导与附录深读**（高威胁近邻强制直通 `L2` 核查附录定理与控制表） → **`L3` 官方代码仓实现审计**。
 - **直接基线（`Direct Baseline`，严控 1–3 篇）** 必须满足四条硬标准：方法经得起推敲、有官方开源代码、在领域内有认可度、发表时间较新。
-- **阶段产物**：`02_paper_map.md` + 单篇档案 `papers/<slug>/notes.md` + 防漏筛记录 `search_logs/stage2_search_audit.md`。
+- **阶段产物**：反稻草人化 `02_paper_map.md` + 单篇档案 `papers/<slug>/notes.md` + 防漏筛记录 `search_logs/stage2_search_audit.md`。
 
-### 阶段 3 — 原文切片 JIT 挂载与受约束构思（[`idea-stage3-ideation`](../skills/idea-stage3-ideation/SKILL.md)）
-- 通过三类科研思考透镜引导推理（非僵化程序表单）：**演化末端破局与混杂剥离**、**直接基线代码级手术**、以及**按需开启的跨子领域机制迁移**。
-- 凡讨论具体公式修改、定理前提或代码手术，必须查 `papers/<slug>/index.md` 按起止行号精准加载 `source/` 或 `repo/` 中对应的 **40–120 行原片**；若某篇 `L1` 论文突然成为论证关键，当场动态升档至 `L2/L3`。
-- 严格执行 **`Explore` / `Challenge` / `Refine` / `Pivot`** 规则：面对用户对基本假设的质疑（`Challenge`，如“涨点是不是仅因梯度变小了？”），严禁护短，立即回查原论文实验控制组是否排除了该混杂变量。
-- **阶段产物**：`03_idea_discussion.md`（严格分栏保存*已验证事实*、*当前工作假设*、*候选方案*与*已排除废案原因*）。
+### 阶段 3 — 极简复杂度预算与受约束构思（[`idea-stage3-ideation`](../skills/idea-stage3-ideation/SKILL.md)）
+- 通过三类科研思考透镜引导推理：**文献冲突与混杂破局**、**直接基线代码级手术**、以及**按需开启的跨子领域机制迁移**。
+- **奥卡姆反拼盘预算**：将前人代码 Bug 修复单列为公平强基线（`Baseline-Clean`），严控核心机制改动在 **1–2 个紧耦合原语**以内（严禁“发现 4 个缺陷就焊 4 个补丁模块”）；一旦引入 Stage 2 未搜过的新子算子，强制触发回跳检索（`Web + --scan-bib --keyword`）。
+- 凡讨论具体公式修改、定理前提或代码手术，必须查 `papers/<slug>/index.md` 按起止行号精准加载 `source/` 或 `repo/` 中对应的 **40–120 行原片**。
+- 严格执行 **`Explore` / `Challenge` / `Refine` / `Pivot`** 规则。
+- **阶段产物**：`03_idea_discussion.md`（清晰分离*已验证事实*、*工作假设*、*基线纠偏前提 vs. 单一核心机制*与*已排除/砍除模块归档*）。
 
-### 阶段 4 — 历史隔离反证审查与主实验共识交接（[`idea-stage4-review-handoff`](../skills/idea-stage4-review-handoff/SKILL.md)）
-- **零历史包袱独立挑刺**：不做“7.5/10”式的算命打分，而是启动一个**完全没看过此前聊天妥协过程**的 `Critical Reviewer Subagent`，仅喂入客观方案与原始论文证据，独立联网查重并逐一回答五问：
-  1. *换同义术语检索近半年 arXiv / OpenReview，是否已有实质相同的工作发表？*
-  2. *候选方案声称要解决的前人缺陷，在 `Direct Baseline` 原文与原代码里真的存在吗？*
-  3. *如果指标上涨，是否存在更简单平庸的替代解释（如隐式降学习率、额外参数/存储开销）？*
-  4. *在算力边界内，拟议实验能否真正证伪核心假设？*
-  5. *从数学或优化机制看，真实训练最可能翻车在哪一步？*
-- **主实验共识接力包导出**：审查通过并由人类拍板后，依据 `02_paper_map.md` 中近期论文的实际主表，导出 `04_handoff.md`——包含精确到文件行号的公式/代码改动坐标、领域公认的主实验 Benchmark 与主指标、以及对齐近期论文对比规模的必比 Baseline 名单（经典奠基 + 1–3 篇直接基线 + 近 1 年最新前沿）。
+### 阶段 4 — 级联数值反证与 `Gate 0` 先导优先交接（[`idea-stage4-review-handoff`](../skills/idea-stage4-review-handoff/SKILL.md)）
+- **零历史包袱五把手术刀反证**：不堆砌多个审稿 Agent，也不做算命打分，由单个完全隔离妥协历史的 `Critical Reviewer Subagent` 独立执行：
+  1. *最小创新核剥离与近邻 `L2` 附录查重*（剥去通用校准壳与基线修 Bug 后，检验核心机制能否独立成文、是否可由 `A+B` 组合替代）；
+  2. *核心前提、代理断层与反稻草人核查*；
+  3. *奥卡姆初等基线占优与混杂检验*（排查复杂数学形式是否退化为超几何检验、对数似然比或常数阻尼等 2 行初等式，检验等范数/等可塑性控制）；
+  4. *端到端级联状态机 Python 数值仿真*（联合模拟门控选择偏差、稀疏抽检缺失步、上下界抢跑竞争与解析极限反例）；
+  5. *统计可交换性（真 `IID` vs. `OOD`）与先导可证伪性核查*。
+- **两级漏斗实验接力包（`04_handoff.md`）**：如实输出多维就绪度评估，先给出 **单卡 1–3 小时可跑完的 `Gate 0` 最小生死先导实验（带量化 Go/No-Go 门槛）**，再给出 `Gate 0` 通过后启用的**文献共识主实验（Main Table）设置**。
 
 ---
 
@@ -202,7 +205,7 @@ export OPENALEX_EMAIL="you@university.edu"      # 可选：加入 OpenAlex 礼�
 
 #### 方式 B：手里已有 1–3 篇种子论文（跳过广搜，直入阶段 2）
 ```text
-我想围绕 O-LoRA (arXiv:2310.06762) 和 InfLoRA (arXiv:2404.00228) 所在的持续 PEFT 正交子空间路线找改进点，
+我想围绕 O-LoRA (arXiv:2310.14152) 和 InfLoRA (arXiv:2404.00228) 所在的持续 PEFT 正交子空间路线找改进点，
 算力上限单张 RTX 4090。请初始化 workspaces/ortho_cl，直接进入阶段 2 四视角深搜与论文建图。
 ```
 
@@ -257,17 +260,23 @@ workspaces/ortho_cl/
 
 [`scripts/`](../scripts/) 下的两个脚本也可在终端中独立调用：
 
-### 1. `scripts/cite_graph.py` —— 双源容错双向引文网络
-联合查询 **Semantic Scholar** 与 **OpenAlex** 并跨源去重（DOI → arXiv ID → 归一化标题）。当未配置 Key 导致 Semantic Scholar 返回 `HTTP 429` 时，自动无缝切换至 OpenAlex 并显式记录诊断信息；施引文献采用**高引关键节点 `B` + 最新零引用前沿 `C` 均衡分桶**，兼顾脉络完整性与最新防撞车需求。
+### 1. `scripts/cite_graph.py` —— 三桶时间均衡引文网、本地 `.bib` 二跳雷达与零延迟 arXiv 流
+联合查询 **Semantic Scholar** 与 **OpenAlex** 并跨源合并去重，施引采用**最新预印本 `C` + 近 1–2 年顶会中坚 `B_recent` + 经典高引 `B_early` 三桶均衡**（支持 `--before-date YYYY-MM-DD` 历史回测防穿越）；同时内置 `--scan-bib`（零 API 扫描本地 `.bib` 二跳高频共引文献）与 `--arxiv-recent`（直连 `export.arxiv.org` 拉取零延迟新预印本）。
 
 ```bash
-python scripts/cite_graph.py 2310.06762 \
+# 1) 双向三桶均衡引文网查询
+python scripts/cite_graph.py 2310.14152 \
   --direction both \
   --limit 40 \
-  --year-min 2022 \
   --with-abstracts \
   --out workspaces/demo/search_logs/olora_graph.md \
   --json-out workspaces/demo/search_logs/olora_graph.json
+
+# 2) 零 API 开销扫描本地 papers/*/source/*.bib 中的二跳高频漏网文献
+python scripts/cite_graph.py --scan-bib workspaces/demo --keyword "subspace|spectral" --limit 25
+
+# 3) 直连 arXiv API 拉取近 30 天零延迟新预印本
+python scripts/cite_graph.py --arxiv-recent "continual learning lora" --categories "cs.LG,cs.CL" --days 30
 ```
 
 ### 2. `scripts/fetch_paper.py` —— 原始源码无损解包与行号索引器
@@ -313,13 +322,13 @@ ResearchFlow/
 
 ResearchFlow 按完整 AI 科研生命周期分四个大阶段逐步构建：
 
-- [x] **第一阶段 — 实证型 Idea 讨论与文献建图（`v0.1`，已完成）**
-  - 综述优先分类树定界、含反证视角的四向深搜、原始 LaTeX 行号索引、`Explore / Challenge / Refine / Pivot` 讨论控制与独立 `Critical Reviewer` 反证交接。
-- [ ] **第二阶段 — 文献共识驱动的实验与消融设计（`v0.2`，规划中）**
-  - 承接 `04_handoff.md` 与 `02_paper_map.md`，构建严控混杂变量的实验矩阵、消融实验、诊断探针与运行前公平性核查。
-- [ ] **第三阶段 — 预算感知的可靠实验执行与故障诊断（`v0.3`，规划中）**
+- [x] **第一阶段 — 实证型 Idea 讨论与文献建图（`v0.1`–`v0.2`，已完成）**
+  - 综述优先分类树定界、三桶均衡引文网 + `.bib` 二跳雷达 + 零延迟 arXiv 流、奥卡姆极简构思预算、跨模块级联数值反证与 `Gate 0` 先导优先交接。
+- [ ] **第二阶段 — 文献共识驱动的实验与消融设计（`v0.3`，规划中）**
+  - 承接 `04_handoff.md` 与 `02_paper_map.md`，构建 `Gate 0` 先导验证脚本、严控混杂变量的实验矩阵、消融设计与运行前公平性核查。
+- [ ] **第三阶段 — 预算感知的可靠实验执行与故障诊断（`v0.4`，规划中）**
   - 确定性评测沙箱、算力时间预算护栏、断点续跑队列与代码实现忠实度审计。
-- [ ] **第四阶段 — 实验结果分析、科研绘图与证据绑定论文撰写（`v0.4`，规划中）**
+- [ ] **第四阶段 — 实验结果分析、科研绘图与证据绑定论文撰写（`v0.5`，规划中）**
   - 反事实机制剖析、出版级图表生成、以及严格绑定真实实验 JSON 与一手文献引用的论文生成与审稿迭代。
 
 ---

@@ -35,9 +35,9 @@ description: Stage 1 of ResearchFlow Ideation. Conducts survey-first broad lands
      ```bash
      python scripts/fetch_paper.py --arxiv <survey_arxiv_id> --workspace workspaces/<project> --slug survey_<short> --role Foundational
      ```
-     通过生成的 `index.md` 直接阅读其分类框架章节与对比总表（一篇好综述梳理的几十上百篇文献脉络远胜盲抓散装摘要）。
-2. **补齐最近 6–12 个月的新动向**
-   - 综述发表存在时间滞后。额外用宿主 Web Search 检索最近一年（顶会 ICLR / NeurIPS / ICML / CVPR / ACL 及 arXiv / OpenReview）该方向热度最高的新分支或争议问题。
+     通过生成的 `index.md` **完整检视其分类框架章节与全部子方向汇总附表（`tables/*.tex`，严禁只挑读其中 1–2 张表而漏掉相邻子表）**，并可顺手运行 `python scripts/cite_graph.py --scan-bib workspaces/<project>` 查看高频共引代表作。
+2. **补齐最近 6–12 个月与近 30 天零延迟新动向**
+   - 综述发表存在时间滞后。额外结合宿主 Web Search（含 `OpenReview` / 顶会列表）与 `python scripts/cite_graph.py --arxiv-recent "<topic_keywords>" --days 30` 检索近期该方向热度最高的新分支或争议问题。
 3. **保存检索记录与草稿**
    - 将检索词、参考的综述/聚合源及初步梳理写入 `workspaces/<project>/search_logs/stage1_landscape_raw.md` 返回给主 Agent。
 
