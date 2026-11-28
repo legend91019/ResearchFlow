@@ -32,6 +32,10 @@
 
 ## 🔥 最新动态
 
+- **[2026-11] `v0.3.0` 实验先导、设计与保真执行版发布** — 将 ResearchFlow 从前期构思完整延伸至可审计的实验闭环（**阶段 5 → 阶段 7B**）：
+  - **算力前置确认的 `Gate 0` 先导实证（[`exp-stage5-pilot`](../skills/exp-stage5-pilot/SKILL.md)）**：开跑前强制确认目标算力（严禁擅跑宿主本机），通过零依赖 [`remote_gpu.py`](../scripts/remote_gpu.py) 完成 1–3 小时受控先导验证、记录真实 `ms/step` 与显存基线，并锁定最终极简方法（`05_pilot_report.md`）；
+  - **回读文献惯例的完整实验与数据图表蓝图（[`exp-stage6-design`](../skills/exp-stage6-design/SKILL.md)）**：强制回读 `02_paper_map.md` §5、`04_handoff.md` §4–5 与 `papers/*/notes.md` 提炼子领域顶会实验惯例，显式拆分“独立跑卡批次”与“零算力派生切片”（一次运行、多维出图），输出双轨兜底图表说明书 [`figures/figure_plan.md`](../templates/figure_plan.md) 与真机折算卡时账单，停顿与研究者协商算力与种子范围（`06_exp_plan.md`）；
+  - **条件等价编码预检与多卡保真审计执行（[`exp-stage7a-coding`](../skills/exp-stage7a-coding/SKILL.md)、[`exp-stage7b-execution`](../skills/exp-stage7b-execution/SKILL.md)、[`run_matrix.py`](../scripts/run_matrix.py)、[`audit_exp.py`](../scripts/audit_exp.py)）**：落地官方基线外科复用、三层参数公平协议、显存条件等价核验、机制感知最小触发测试（`test_claims.py`）、10 秒最坏条件显存压测、一机多卡只增账本队列（防新旧 Bug 版本混算）及确定性覆盖率/溯源/图表反硬编码审计（`07_exp_results.md`）。
 - **[2026-11] `v0.2.0` Idea 阶段深度加固版发布** — 基于跨 4 个子领域的时序回测与根因取证复盘，全面升级检索召回、极简构思预算与级联反证机制：
   - **零盲区文献雷达（[`cite_graph.py`](../scripts/cite_graph.py)）**：修复截断前短路问题并升级为 S2 + OpenAlex **三桶时间均衡召回**（最新预印本 `C` + 近 1–2 年顶会中坚 `B_recent` + 奠基经典 `B_early`），新增 **`--scan-bib` 本地 `.bib` 二跳共引雷达**（零 API 开销抓出高频漏网文献）、**`--arxiv-recent` 零延迟预印本流**（绕过 48 小时索引滞后）及 `--before-date` 严格回测时间锁；
   - **奥卡姆反拼盘构思约束（[`idea-stage3-ideation`](../skills/idea-stage3-ideation/SKILL.md)）**：强制剥离“基线修 Bug”与“核心科学贡献”，严控核心机制在 1–2 个紧耦合原语内，且每引入新算子强制触发回跳查重；
@@ -157,6 +161,26 @@ ResearchFlow 将科研前期的构思过程划分为四个递进阶段，每个�
   4. *端到端级联状态机 Python 数值仿真*（联合模拟门控选择偏差、稀疏抽检缺失步、上下界抢跑竞争与解析极限反例）；
   5. *统计可交换性（真 `IID` vs. `OOD`）与先导可证伪性核查*。
 - **两级漏斗实验接力包（`04_handoff.md`）**：如实输出多维就绪度评估，先给出 **单卡 1–3 小时可跑完的 `Gate 0` 最小生死先导实验（带量化 Go/No-Go 门槛）**，再给出 `Gate 0` 通过后启用的**文献共识主实验（Main Table）设置**。
+
+---
+
+## 🧪 实验先导、设计与保真执行工作流（阶段 5 → 7B）
+
+定稿 `04_handoff.md` 后，ResearchFlow 严格区分 **Agent 的工程自主权**（远程同步、性能剖析、故障恢复、确定性出图）与 **人类研究者的科学决策权**（算力授权、种子/底座范围协商、真实正负结果去留）：
+
+### 阶段 5 — `Gate 0` 先导实证与方法定型（[`exp-stage5-pilot`](../skills/exp-stage5-pilot/SKILL.md)）
+- **强制算力前置确认**：开跑前先确认远程 GPU/SSH 资源，绝不擅自占用宿主本机 CPU/GPU。
+- 通过 [`remote_gpu.py`](../scripts/remote_gpu.py) 执行单元测试、15 秒真机冒烟测速（实测 `steady_ms_per_step` 与 `peak_vram_gb`）及 1–3 小时受控对照，在 `05_pilot_report.md` 锁定 `GO` / `SIMPLIFY` / `PIVOT` 裁决。
+
+### 阶段 6 — 子领域惯例驱动的实验与数据图表设计（[`exp-stage6-design`](../skills/exp-stage6-design/SKILL.md)）
+- **强制回读前序共识**：从 `02_paper_map.md` §5、`04_handoff.md` §4–5 与近邻 `papers/<slug>/notes.md` 提炼同行 Benchmark、Baseline 规模、常用种子惯例（如 `1 seed` vs. `3 seeds`）与超参公平协议（`Paper-Native` / `Equal-Tuning`）。
+- **一次运行、多维切片 + 图表双轨说明书**：拆分需跑卡批次与零算力派生切片，输出实验数据图表说明书 `figures/figure_plan.md` 与基于 `Gate 0` 实测吞吐的卡时账单（`06_exp_plan.md`），停顿与人类协商算力并锁定 `exp_manifest.json`（架构框图留待论文写作阶段）。
+
+### 阶段 7A — 实验编码、条件等价适配与三重预检（[`exp-stage7a-coding`](../skills/exp-stage7a-coding/SKILL.md)）
+- 外科手术式复用 `papers/<slug>/repo/` 官方代码并哈希锁定 `eval_harness.py`；执行显存**条件等价核验**（严查整除性、Token 归一化与 `optimizer.step()` 触发边界）；跑通**机制最小触发测试 `test_claims.py`**、**独立 `Code-to-Claim` 代码盲审**与 **10 秒最坏条件显存压测**。
+
+### 阶段 7B — 多卡/远程断点执行、分级自愈与保真审计（[`exp-stage7b-execution`](../skills/exp-stage7b-execution/SKILL.md)）
+- 由 [`run_matrix.py`](../scripts/run_matrix.py) + [`remote_gpu.py`](../scripts/remote_gpu.py) 驱动一机多卡负载均衡与只增账本 `ledger.jsonl`（修公共 Bug 时用 `invalidate` 防止新旧版本混算），直接从原始结果渲染 `.pdf`/`.png` 实验图表，并通过 [`audit_exp.py`](../scripts/audit_exp.py) 全量审计后交付 `07_exp_results.md`。
 
 ---
 
@@ -306,13 +330,20 @@ ResearchFlow/
 ├── skills/                          # 按阶段按需读取的模块化科研技能
 │   ├── idea-stage1-landscape/       # 阶段 1：综述优先广搜与学术分类树定界
 │   ├── idea-stage2-literature-map/  # 阶段 2：四视角深搜、防漏筛审计与 L0–L3 动态建图
-│   ├── idea-stage3-ideation/        # 阶段 3：JIT 原文/源码切片核验与受约束推演
-│   └── idea-stage4-review-handoff/  # 阶段 4：历史隔离反证审查与主实验共识交接
+│   ├── idea-stage3-ideation/        # 阶段 3：JIT 原文/源码切片核验与极简推演
+│   ├── idea-stage4-review-handoff/  # 阶段 4：历史隔离反证审查与 Gate 0 先导交接
+│   ├── exp-stage5-pilot/            # 阶段 5：算力前置确认的 Gate 0 先导实证与方法定型
+│   ├── exp-stage6-design/           # 阶段 6：子领域惯例驱动的实验与数据图表蓝图设计
+│   ├── exp-stage7a-coding/          # 阶段 7A：基线复用、条件等价适配与三重预检门禁
+│   └── exp-stage7b-execution/       # 阶段 7B：多卡队列调度、分级自愈、出图与确定性审计
 ├── scripts/                         # 零第三方强依赖的确定性辅助 CLI
-│   ├── cite_graph.py                # S2 + OpenAlex 双向引文网络工具
-│   └── fetch_paper.py               # arXiv/PDF 原始材料抓取、LaTeX 行号索引与仓库浅克隆
-├── templates/                       # 01–04 阶段文档、单篇阅读档案与检索审计表模板
-├── tests/                           # 脚本功能与协议完整性单元测试
+│   ├── cite_graph.py                # 三桶均衡引文网、.bib 二跳雷达与零延迟 arXiv 流
+│   ├── fetch_paper.py               # arXiv/PDF 原始材料抓取、LaTeX 行号索引与仓库浅克隆
+│   ├── remote_gpu.py                # 免转义 SSH 密钥注入、硬件探针、tar 流同步与非轮询巡检
+│   ├── run_matrix.py                # 一机多卡实验队列与只增账本（ledger.jsonl）管理器
+│   └── audit_exp.py                 # 覆盖率、版本溯源、数值完整性与图表反硬编码审计器
+├── templates/                       # 01–07 阶段文档、实验图表说明书、阅读档案与检索审计模板
+├── tests/                           # 脚本功能、故障注入与协议完整性单元测试
 └── workspaces/                      # 本地课题工作空间目录（默认 git 忽略）
 ```
 
@@ -324,12 +355,12 @@ ResearchFlow 按完整 AI 科研生命周期分四个大阶段逐步构建：
 
 - [x] **第一阶段 — 实证型 Idea 讨论与文献建图（`v0.1`–`v0.2`，已完成）**
   - 综述优先分类树定界、三桶均衡引文网 + `.bib` 二跳雷达 + 零延迟 arXiv 流、奥卡姆极简构思预算、跨模块级联数值反证与 `Gate 0` 先导优先交接。
-- [ ] **第二阶段 — 文献共识驱动的实验与消融设计（`v0.3`，规划中）**
-  - 承接 `04_handoff.md` 与 `02_paper_map.md`，构建 `Gate 0` 先导验证脚本、严控混杂变量的实验矩阵、消融设计与运行前公平性核查。
-- [ ] **第三阶段 — 预算感知的可靠实验执行与故障诊断（`v0.4`，规划中）**
-  - 确定性评测沙箱、算力时间预算护栏、断点续跑队列与代码实现忠实度审计。
-- [ ] **第四阶段 — 实验结果分析、科研绘图与证据绑定论文撰写（`v0.5`，规划中）**
-  - 反事实机制剖析、出版级图表生成、以及严格绑定真实实验 JSON 与一手文献引用的论文生成与审稿迭代。
+- [x] **第二阶段 — 子领域惯例驱动的实验与数据图表设计（`v0.3`，已完成）**
+  - 算力确认的 `Gate 0` 先导锁方法、强制回读前序文献实验惯例、“一次运行多维切片”矩阵规划、双轨 `figure_plan.md` 图表说明书与实测吞吐卡时协商。
+- [x] **第三阶段 — 条件等价编码、多卡断点执行与保真度审计（`v0.3`，已完成）**
+  - 零依赖远程同步巡检（`remote_gpu.py`）、机制感知触发测试 `test_claims.py` + 最坏条件显存压测、多卡只增账本队列（`run_matrix.py`）与确定性覆盖率/溯源/图表审计（`audit_exp.py`）。
+- [ ] **第四阶段 — 科学叙事综合、架构框图制作与证据绑定论文撰写（`v0.4`，规划中）**
+  - 论文概念/模型架构框图设计与严格绑定真实 `ledger.jsonl` 实验数据及一手文献引用的顶会论文成稿与审稿打磨。
 
 ---
 

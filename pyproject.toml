@@ -1,7 +1,7 @@
 [project]
 name = "researchflow"
-version = "0.2.0"
-description = "Research Workspace Protocol: lightweight host-agent harness for evidence-grounded AI research ideation and workflows."
+version = "0.3.0"
+description = "Research Workspace Protocol: lightweight host-agent harness for evidence-grounded AI research ideation and experimentation."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"

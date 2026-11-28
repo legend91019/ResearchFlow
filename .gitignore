@@ -12,9 +12,11 @@ venv/
 dist/
 build/
 
-# Environment & OS
+# Environment, SSH credentials & OS
 .env
 .env.*
+.remote_host.json
+.ssh/
 .DS_Store
 Thumbs.db
 

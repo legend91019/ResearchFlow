@@ -32,6 +32,10 @@
 
 ## 🔥 News
 
+- **[2026-11] `v0.3.0` Experiment Pilot, Design & Execution Release** — Extending ResearchFlow from ideation into full-cycle rigorous experimentation (**Stages 5 → 7B**):
+  - **Compute-Gated `Gate 0` Pilot ([`exp-stage5-pilot`](skills/exp-stage5-pilot/SKILL.md))**: Confirms target compute upfront (never silently saturating the local host), executes 1–3h confound-controlled falsification pilots via [`remote_gpu.py`](scripts/remote_gpu.py), captures real `ms/step` & VRAM baselines, and locks the parsimonious method specification (`05_pilot_report.md`);
+  - **Subfield-Grounded Experiment & Data-Figure Blueprint ([`exp-stage6-design`](skills/exp-stage6-design/SKILL.md))**: Reads back Stage 1–4 benchmark conventions (`02_paper_map.md` §5, `04_handoff.md` §4–5, `papers/*/notes.md`), separates actual GPU runs from zero-GPU derived views (*Log Once, Slice Many*), outputs a dual-track [`figures/figure_plan.md`](templates/figure_plan.md), and estimates GPU-hours for transparent compute/seed negotiation (`06_exp_plan.md`);
+  - **Conditional-Equivalent Coding & Multi-GPU Audited Execution ([`exp-stage7a-coding`](skills/exp-stage7a-coding/SKILL.md), [`exp-stage7b-execution`](skills/exp-stage7b-execution/SKILL.md), [`run_matrix.py`](scripts/run_matrix.py), [`audit_exp.py`](scripts/audit_exp.py))**: Enforces surgical official-repo baseline reuse, 3-tier parameter fairness, conditional-equivalent micro-batch scaling, mechanism-aware trigger tests (`test_claims.py`), worst-case VRAM probes, multi-GPU append-only ledger queues with version invalidation, and deterministic coverage/provenance/plotting audits (`07_exp_results.md`).
 - **[2026-11] `v0.2.0` Ideation Hardening Release** — Upgraded retrieval, anti-accretion ideation, and falsification review based on 4-domain backtest & postmortem diagnostics:
   - **Zero-Blind-Spot Retrieval ([`cite_graph.py`](scripts/cite_graph.py))**: Dual-provider S2 + OpenAlex merge with **3-tier temporal balancing** (latest preprints `C` + 1–2 year venue backbone `B_recent` + foundational classics `B_early`), **`--scan-bib`** zero-API 2-hop local `.bib` co-citation radar, **`--arxiv-recent`** zero-lag preprint stream, and **`--before-date`** temporal cutoffs for leak-free retrospective backtesting;
   - **Anti-Accretion Ideation ([`idea-stage3-ideation`](skills/idea-stage3-ideation/SKILL.md))**: Enforces a 1–2 tightly coupled primitive complexity cap, separates clean baseline bugfixes from core scientific claims, and triggers mandatory search-back whenever new sub-mechanisms are introduced;
@@ -157,6 +161,26 @@ Selected papers (typically 15–25) are read by parallel `Paper Reader Subagents
   4. *End-to-End Coupled State-Machine Simulation* (writing a Python script to test conditional gate selection bias, unobserved sparse-audit steps, competing thresholds, and analytical corner cases);
   5. *Statistical Exchangeability (`IID` vs. `OOD`) & Pilot Falsifiability*.
 - **Two-Stage Experimental Handoff (`04_handoff.md`)**: Exports multi-dimensional readiness status, **`Gate 0` (a 1–3 hour Pilot Falsification Test with explicit Go/No-Go thresholds)**, and **literature-grounded Main Table settings** activated once `Gate 0` passes.
+
+---
+
+## 🧪 Stages 5–7B: Pilot Lock, Experiment Design & Audited Execution
+
+Once ideation converges to `04_handoff.md`, ResearchFlow governs experimental validation with strict separation between **engineering autonomy** (automated SSH sync, crash recovery, profiling, plotting) and **scientific authority** (human-approved compute allocation, seed/scope trade-offs, and honest negative-result preservation):
+
+### Stage 5 — `Gate 0` Pilot Falsification & Method Lock ([`exp-stage5-pilot`](skills/exp-stage5-pilot/SKILL.md))
+- **Mandatory Pre-Pilot Compute Pause**: Confirms remote SSH or target GPU before running any model workload—never silently running heavy training on the host machine.
+- Executes algebraic unit tests, a 15s GPU smoke & throughput benchmark (`steady_ms_per_step`, `peak_vram_gb`), and a 1–3h $2\times 2$ confound-controlled pilot via [`remote_gpu.py`](scripts/remote_gpu.py), locking `GO` / `SIMPLIFY` / `PIVOT` in `05_pilot_report.md`.
+
+### Stage 6 — Subfield-Authentic Experiment & Figure Design ([`exp-stage6-design`](skills/exp-stage6-design/SKILL.md))
+- **Artifact Read-Back**: Extracts empirical conventions (benchmarks, baseline counts, `1 seed` vs. multi-seed norms, `Paper-Native` vs. `Equal-Tuning` hyperparameter fairness, and auxiliary diagnostic styles) directly from `02_paper_map.md` §5, `04_handoff.md` §4–5, and `papers/<slug>/notes.md`.
+- **Log Once, Slice Many**: Explicitly separates **Execution Runs** (GPU-consuming batches) from **Zero-GPU Derived Views** (heatmaps, trade-off decompositions, and overhead tables sliced from logged matrices/tensors), paired with a dual-track experimental data figure specification (`figures/figure_plan.md`) and a `Gate 0`-calibrated GPU-hour estimate (`06_exp_plan.md`).
+
+### Stage 7A — Coding, Conditional Equivalence & Pre-Flight Gates ([`exp-stage7a-coding`](skills/exp-stage7a-coding/SKILL.md))
+- Reuses commit-pinned `papers/<slug>/repo/` baselines, locks `eval_harness.py` via SHA-256 in `exp_manifest.json`, verifies **conditional-equivalent hardware adaptation** (`effective_batch_size` divisibility, token normalization, `optimizer.step()` hook boundaries), and passes three pre-flight gates: **mechanism-aware `test_claims.py`**, a **blind `Code-to-Claim Auditor Subagent`**, and a **10s Worst-Case Resource Probe**.
+
+### Stage 7B — Multi-GPU Execution, Triage & Deterministic Audit ([`exp-stage7b-execution`](skills/exp-stage7b-execution/SKILL.md))
+- Dispatches multi-GPU queues via [`run_matrix.py`](scripts/run_matrix.py) + [`remote_gpu.py`](scripts/remote_gpu.py) over an append-only `ledger.jsonl` (using `invalidate` tombstones to prevent mixing pre- and post-bugfix runs), renders vector `.pdf`/`.png` experimental charts from raw JSON/NPZ outputs, and enforces [`audit_exp.py`](scripts/audit_exp.py) before finalizing `07_exp_results.md`.
 
 ---
 
@@ -305,15 +329,22 @@ ResearchFlow/
 │   ├── README_CN.md                 # Simplified Chinese documentation
 │   └── assets/banner.svg            # Vector architecture banner
 ├── skills/                          # Stage-scoped skills loaded on demand
-│   ├── idea-stage1-landscape/       # Broad survey-first discovery & taxonomy scoping
-│   ├── idea-stage2-literature-map/  # 4-angle deep search, near-miss audit & L0–L3 paper mapping
-│   ├── idea-stage3-ideation/        # JIT source/code slice inspection & assumption-aware ideation
-│   └── idea-stage4-review-handoff/  # Blind critical review & consensus main-table handoff
+│   ├── idea-stage1-landscape/       # Stage 1: Survey-first discovery & taxonomy scoping
+│   ├── idea-stage2-literature-map/  # Stage 2: 4-angle deep search, near-miss audit & L0–L3 paper mapping
+│   ├── idea-stage3-ideation/        # Stage 3: JIT source/code slice inspection & parsimonious ideation
+│   ├── idea-stage4-review-handoff/  # Stage 4: Blind critical review & Gate 0 pilot-first handoff
+│   ├── exp-stage5-pilot/            # Stage 5: Compute-gated Gate 0 pilot & method lock
+│   ├── exp-stage6-design/           # Stage 6: Subfield-grounded experiment & data-figure blueprint
+│   ├── exp-stage7a-coding/          # Stage 7A: Baseline reuse, conditional-equivalent coding & 3-gate preflight
+│   └── exp-stage7b-execution/       # Stage 7B: Multi-GPU queue, 3-class triage, plotting & deterministic audit
 ├── scripts/                         # Zero-dependency deterministic helper CLIs
-│   ├── cite_graph.py                # S2 + OpenAlex bidirectional citation graph
-│   └── fetch_paper.py               # Unmodified arXiv/PDF fetcher, LaTeX indexer & repo cloner
-├── templates/                       # Clean Markdown schemas for 01–04 state files, notes & audits
-├── tests/                           # Unit & protocol integrity test suite
+│   ├── cite_graph.py                # 3-tier citation graph, .bib radar & zero-lag arXiv stream
+│   ├── fetch_paper.py               # Unmodified arXiv/PDF fetcher, LaTeX indexer & repo cloner
+│   ├── remote_gpu.py                # Zero-escape SSH bootstrap, hardware probe, tar sync & job status
+│   ├── run_matrix.py                # Multi-GPU experiment queue & append-only ledger manager
+│   └── audit_exp.py                 # Coverage, provenance, integrity & anti-hardcoding auditor
+├── templates/                       # Clean Markdown schemas for 01–07 state files, figures, notes & audits
+├── tests/                           # Unit, fault-injection & protocol integrity test suite
 └── workspaces/                      # Local per-topic research workspaces (git-ignored by default)
 ```
 
@@ -325,12 +356,12 @@ ResearchFlow is being developed progressively across the four stages of the AI r
 
 - [x] **Phase I — Evidence-Grounded Ideation & Literature Mapping (`v0.1`–`v0.2`)**
   - Survey-first taxonomy scoping, 3-tier citation graph + `.bib` co-citation radar + zero-lag arXiv stream, anti-accretion ideation, coupled numerical falsification review, and `Gate 0` pilot-first handoff.
-- [ ] **Phase II — Consensus Experimental & Diagnostic Protocol Design (`v0.3`)**
-  - Translating `04_handoff.md` and `02_paper_map.md` into `Gate 0` pilot runners, confound-controlled experimental matrices, ablation designs, and pre-flight verification checks.
-- [ ] **Phase III — Budget-Aware Execution & Fault-Tolerant Diagnostics (`v0.4`)**
-  - Deterministic training/evaluation harnesses, compute budget guards, checkpointed queues, and implementation fidelity audits.
-- [ ] **Phase IV — Result Analysis, Scientific Visualization & Evidence-Bound Writing (`v0.5`)**
-  - Counterfactual analysis, publication-grade plotting, and manuscript generation strictly bound to verified metrics and primary sources.
+- [x] **Phase II — Consensus Experimental & Data-Figure Protocol Design (`v0.3`)**
+  - Compute-gated `Gate 0` pilot locking, Stage 1–4 convention read-back, *Log Once, Slice Many* run/view separation, dual-track `figure_plan.md`, and `Gate 0`-calibrated GPU-hour negotiation.
+- [x] **Phase III — Conditional-Equivalent Coding, Multi-GPU Execution & Fidelity Audits (`v0.3`)**
+  - Zero-dependency remote SSH sync/inspection (`remote_gpu.py`), mechanism-aware `test_claims.py` + worst-case VRAM probes, multi-GPU append-only ledger queues (`run_matrix.py`), and deterministic coverage/provenance/plotting verification (`audit_exp.py`).
+- [ ] **Phase IV — Scientific Synthesis, Architecture Diagrams & Evidence-Bound Paper Writing (`v0.4`)**
+  - Conceptual/architecture diagram authoring and full LaTeX manuscript generation strictly bound to verified `ledger.jsonl` metrics and primary literature sources.
 
 ---
 

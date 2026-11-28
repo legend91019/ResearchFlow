@@ -31,6 +31,10 @@
    - **优先统一消解或做减法**：遇到反例或审查质疑时，优先通过重构统一目标函数（如用似然比替代多路手工权重）或收缩问题边界解决，严禁无节制外挂新规则补丁。
    - **反稻草人转述**：跨阶段浓缩前人方法局限时必须忠实对齐 `papers/<slug>/notes.md` 原文记录，严禁将前人“缺乏特定方向约束”歪曲矮化为“完全无约束”。
 
+6. **工程自主权与科学决策权严格分离（Engineering Autonomy vs. Scientific Authority）**
+   - **充分的工程自主权**：在实验阶段，Agent 拥有自动部署远程环境、修复代码 Bug、在证明条件等价前提下适配显存旋钮、断点续跑以及确定性渲染实验图表的工程自主权。
+   - **严守科学决策与算力边界**：① **未经用户明确确认，严禁直接在宿主本机 CPU/GPU 上运行模型训练或重型实验**；② 严禁私自利用测试集调参选模、静默删减失败条件/种子、混算不兼容代码版本的结果，或在正式实验中擅自删改方法核心组件掩盖负结果——一切涉及实验范围裁剪与方法变更的科学决策必须完整呈现正负证据交由人类研究者拍板。
+
 ---
 
 ## 二、沟通与专业表达规范（Communication Rules）
@@ -71,14 +75,15 @@
    - 若需要同时深度横向比对 3 个以上代码仓库的实现细节，派生临时阅读子智能体输出带行号引用的专项对比文件供主窗口读取。
 
 3. **阶段交接清窗**
-   - 每个课题独立存放在 `workspaces/<project_slug>/` 下，通过四份核心状态文档接力：`01_scope.md` → `02_paper_map.md` → `03_idea_discussion.md` → `04_handoff.md`。每完成一个阶段（或单轮讨论超过 15–20 回合上下文变重时），先将最新事实、工作假设与决策同步落盘，再建议用户开新窗口或 `/compact` 进入下一阶段。
+   - 每个课题独立存放在 `workspaces/<project_slug>/` 下，通过核心状态文档接力：`01_scope.md` → `02_paper_map.md` → `03_idea_discussion.md` → `04_handoff.md` → `05_pilot_report.md` → `06_exp_plan.md` → `07_exp_results.md`。每完成一个阶段（或单轮讨论超过 15–20 回合上下文变重时），先将最新事实、工作假设与决策同步落盘，再建议用户开新窗口或 `/compact` 进入下一阶段。
 
 ---
 
-## 五、Idea 研究四阶段路由（按需加载 Skill，切勿一次性全读）
+## 五、科研全流程阶段路由（按需加载 Skill，切勿一次性全读）
 
 开始或恢复任何课题时，先检查 `workspaces/<project_slug>/` 下已存在哪些阶段文件，**仅读取当前所处阶段对应的单个 `SKILL.md`**：
 
+### 第一板块：实证型 Idea 构思与文献建图（Stage 1–4）
 1. **阶段 1 — 方向广搜与分支锁定**（无 `01_scope.md` 时，或用户给出宽泛大方向时）
    - 读取：`skills/idea-stage1-landscape/SKILL.md`
    - *快捷入口*：若用户直接提供了 1–3 篇明确的种子论文且细分问题清晰，协助确认边界写入初始 `01_scope.md` 后直接进入阶段 2。
@@ -87,5 +92,17 @@
    - 配套确定性工具：`python scripts/cite_graph.py`（含双向引文网、`--scan-bib` 本地二跳共引雷达、`--arxiv-recent` 零延迟预印本流）、`python scripts/fetch_paper.py`
 3. **阶段 3 — 锚点精读与受约束 Idea 推演**（已有 `02_paper_map.md`，开展方法构思与假设质询时）
    - 读取：`skills/idea-stage3-ideation/SKILL.md`
-4. **阶段 4 — 独立反证审查与主实验交接导出**（候选 Idea 成型，准备做防撞车/逻辑反证并移交实验设计时）
+4. **阶段 4 — 独立反证审查与先导优先交接导出**（候选 Idea 成型，准备做防撞车/逻辑反证并导出 `04_handoff.md` 时）
    - 读取：`skills/idea-stage4-review-handoff/SKILL.md`
+
+### 第二板块：先导验证、实验设计与保真执行（Stage 5–7B）
+5. **阶段 5 — `Gate 0` 先导实证与方法定型**（已有 `04_handoff.md`，准备询问先导算力并在真机上做 1–3 小时最小生死验证时）
+   - 读取：`skills/exp-stage5-pilot/SKILL.md`
+   - 配套确定性工具：`python scripts/remote_gpu.py`（免转义 SSH 密钥初始化、探针、流式同步与非轮询状态巡检）
+6. **阶段 6 — 子领域惯例驱动的实验与数据图表设计**（`05_pilot_report.md` 已锁定最终方法，设计完整实验蓝图 `06_exp_plan.md` 与 `figures/figure_plan.md` 并协商主实验算力时）
+   - 读取：`skills/exp-stage6-design/SKILL.md`
+7. **阶段 7A — 实验编码、条件等价适配与科学保真预检**（算力与 `exp_manifest.json` 已锁定，编写实验代码并执行 `test_claims.py`、独立代码盲审与最坏显存压测时）
+   - 读取：`skills/exp-stage7a-coding/SKILL.md`
+8. **阶段 7B — 多卡/远程断点执行、分级自愈与实验图表审计**（代码通过三重预检，挂起单卡/多卡队列、断点恢复、生成确定性实验图表并运行保真审计产出 `07_exp_results.md` 时）
+   - 读取：`skills/exp-stage7b-execution/SKILL.md`
+   - 配套确定性工具：`python scripts/remote_gpu.py`、`python scripts/run_matrix.py`（多卡队列与只增账本 `ledger.jsonl`）、`python scripts/audit_exp.py`（覆盖率、版本溯源与图表反硬编码审计）
