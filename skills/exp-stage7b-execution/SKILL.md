@@ -1,67 +1,65 @@
 ---
 name: exp-stage7b-execution
-description: Stage 7B of ResearchFlow Experimentation. Runs multi-GPU/remote queues via remote_gpu.py and run_matrix.py with append-only ledger tracking, applies 3-class failure triage without silent cherry-picking, renders deterministic data figures, and runs audit_exp.py before delivering 07_exp_results.md.
+description: Stage 7B of ResearchFlow Experimentation. Dispatches multi-GPU/remote queues via remote_gpu.py and run_matrix.py, launches the zero-token deterministic local Kanban dashboard (exp_dashboard.py), enforces a strict Read-Only Live Inspection rule unless authorized, applies 3-class triage with append-only version invalidation, renders data figures, and runs audit_exp.py.
 ---
 
-# Stage 7B — 多卡/远程断点执行、分级自愈与实验图表审计 (`exp-stage7b-execution`)
+# Stage 7B — 多卡断点执行、零 Token 实时看板与实验保真审计 (`exp-stage7b-execution`)
 
-本技能承接通过三重预检门禁的 `experiments/` 代码与 `exp_manifest.json`，负责**稳健调度单卡/多卡远程算力、按科学权限边界处理运行故障、在数据跑完后直接生成确定性实验图表并执行七维保真审计**，最终交付完全可溯源的 `07_exp_results.md`。
-
-> **核心原则**：Agent 拥有充分的**工程排障自主权**，但绝不拥有未经授权的**科学篡改权**——严禁为了迎合预期结论而私自删条件、挑种子、混算不兼容代码版本或静默改动方法核心。
+本技能承接通过最终盲审锁版的 `experiments/` 代码与 `exp_manifest.json`，负责**启动远端单卡/多卡守护队列、提供零 Token 消耗的确定性实时看板、严守在线实验只读边界处理异常、并在跑完后渲染确定性实验图表与执行七维审计**，交付 `07_exp_results.md`。
 
 ---
 
-## 一、Step 1：多卡并发守护启动与非轮询状态巡检
+## 一、Step 1：挂起守护队列 + 启动本地零 Token 实时看板（告别 Agent 高频轮询刷屏）
 
-1. **同步脚本与后台队列启动**：
-   将 `scripts/run_matrix.py` 一并推入实验目录，通过 `remote_gpu.py launch` 在远端挂起单卡或多卡并发运行队列（`--gpus 0,1,2,3` 会自动开启工作池将独立 `condition_id` 动态负载均衡到各张空闲显卡；纯 API/CPU 实验可用 `--workers N`）：
+1. **推送代码与启动远端多卡/单卡守护队列**：
    ```bash
    python scripts/remote_gpu.py push --workspace workspaces/<project> --src experiments
    python scripts/remote_gpu.py push --workspace workspaces/<project> --src ../../scripts/run_matrix.py --dest experiments/run_matrix.py
    python scripts/remote_gpu.py launch --workspace workspaces/<project> --job-id main_exp --workdir experiments \
      --cmd "python run_matrix.py run --manifest exp_manifest.json --ledger results/ledger.jsonl --gpus 0 --commit $(git rev-parse --short=12 HEAD)"
    ```
-   - `run_matrix.py` 采用**只增不删（Append-Only）**的 `results/ledger.jsonl` 账本，每完成一个单元立即 `fsync` 落盘并原子刷新 `results/progress.json`；任何中断重连后再次启动同一命令，会自动跳过已有效 `completed` 的条件。
-2. **定时非轮询巡检**：
-   - 使用宿主定时唤醒工具（按总预计时长每 15–45 分钟检查一次），调用单次快照命令：
+   - 若服务器有多张空闲 GPU（如 `4× 4090`），直接传 `--gpus 0,1,2,3`，`run_matrix.py` 会自动开启工作池动态负载均衡各独立 `condition_id`，并通过只增不删的 `results/ledger.jsonl` 与原子 `results/progress.json` 支持任意时刻幂等断点续跑。
+2. **启动本地确定性实时看板（`scripts/exp_dashboard.py` — 零 Agent Token 消耗！）**：
+   - 开跑确认首轮启动正常后，在本机后台守护启动轻量 Web 看板（使用 `run_command(..., IsDaemon=true)`），并把本地浏览器地址直接发给用户：
      ```bash
-     python scripts/remote_gpu.py status --workspace workspaces/<project> --job-id main_exp --progress-file experiments/results/progress.json
+     python scripts/exp_dashboard.py --workspace workspaces/<project> --job-id main_exp --port 8765
      ```
-   - 注意：`LOW_GPU_UTIL`（GPU 利用率 `<5%`）仅作为**诊断信号**而非自动判死（API 型评测、CPU 预处理或任务切换间隙本就低占用；仅当进度长期停滞时才调用 `remote_gpu.py profile` 抓栈排查死锁或慢算子）。
+   - 用户随时打开 `http://127.0.0.1:8765` 即可实时查看远端 GPU 利用率/显存、主机内存/磁盘余量、总进度与分批进度条、当前运行条件的已耗时分钟数、已完成结果指标及实时滚动日志末尾——**全程由确定性 Python 程序完成，消耗 0 个 LLM Token**！
+   - **严禁挂 2–5 分钟短周期 `schedule` 定时器反复刷屏撑爆上下文**！若用户希望 Agent 也在后台兜底关注，仅按总预算跨度设置极低频（如每 1–4 小时一次）的健康快照检查，或完全交由看板观察、按需唤醒。
 
 ---
 
-## 二、Step 2：异常与结果的“三类分级自愈”及版本隔离铁律
+## 二、Step 2：在线实验“只读诊断红线”与三类异常分级处置
 
-巡检中遇到报错、中断或非预期数值时，严格按以下三类定性处置：
-
-1. **Ⅰ 类：基础设施与物理资源故障**（SSH 闪断、实例抢占重启、磁盘空间告警、下载限流、突发显存峰值）
-   - **处置**：清理缓存或应用经 Stage 7A 条件等价验证的物理参数（或开启梯度检查点），直接重新拉起 `run_matrix.py run` 从断点续跑，**零算法代码修改**。
-2. **Ⅱ 类：代码实现 Bug**（特定数据集边界维度报错、数值溢出 `NaN`、某 Baseline 参数传错）
-   - **处置与版本防混算铁律**：
-     1. 在本地修复 Bug 并重新运行通过 `experiments/tests/test_claims.py`；
-     2. **严禁直接删除 `ledger.jsonl` 历史行，也严禁将含公共 Bug 的旧版本结果与新版本结果直接混算**！必须评估该修改的影响范围：若修改了公共模块（如数据预处理、公共训练循环），对所有受影响的已完成条件执行失效标记：
-        ```bash
-        python scripts/run_matrix.py invalidate --ledger workspaces/<project>/experiments/results/ledger.jsonl \
-          --pattern "<受影响条件正则>" --reason "<说明修复的公共Bug及影响范围>"
-        ```
-        若仅修改了纯注释/日志且完全不影响数值兼容性，方可将新旧 commit 显式列入 `exp_manifest.json` 的 `compatible_commits`；
-     3. 同步新代码并重跑被标记 `invalidated` 与 `failed` 的条件。
-3. **Ⅲ 类：真实科学负结果或消融反转**（代码运行完全正常，但某条件下我方未超最强基线，或消融中更简变体反而优于完整版）
-   - **处置**：**严禁静默删减失败的数据集/种子、严禁暗中调弱 Baseline、严禁未经用户批准擅自删改主方法组件重新包装**！保留完整账本与全部正负数据：若核心主表全面不成立，暂停向用户汇报并讨论回退/转型；若局部边界受限或某次要项多余，在 `07_exp_results.md` 中完整呈现并向用户提出公开简化或收缩 Claim 边界的建议。
+### 🚨 在线实验“只读诊断红线”（Inspect-Only Live Experiment Rule — 最高铁律）
+当正式队列正在远端运行时，若用户发消息询问状态（例如*“看下怎么回事，某个批次好像跑得有点久”*）：
+1. **默认仅拥有 100% 只读检查权限**！只能调用 `remote_gpu.py status`、`remote_gpu.py profile`、`exp_dashboard.py --once` 或只读查看远端日志定位原因，然后向用户清晰汇报实况（例如：“第 13 组某基线因某算子在 CPU 执行预计还需 X 分钟，未死锁；可选方案 A 继续等跑完，方案 B 暂停优化该算子后重跑该组”）；
+2. **未经用户明确下达修改/重启指令，绝对禁止私自修改实验代码、绝对禁止执行 `remote_gpu.py kill` 杀掉正在跑的实验进程或擅自重启队列！**
 
 ---
 
-## 三、Step 3：确定性实验图表渲染与 `audit_exp.py` 保真审计
+### 获批介入后的三类故障分级处置与版本隔离
 
-全部计划运行落盘并通过 `remote_gpu.py pull` 拉回本地 `workspaces/<project>/experiments/results/` 后：
+当运行确实发生故障中断（或经用户明确批准介入修复）时，严格按三类边界处置：
 
-1. **生成确定性实验数据图表与汇总表**：
-   - 对照 `figures/figure_plan.md` 编写并运行 `experiments/plots/plot_*.py`（以及必要的表格聚合脚本）：**脚本必须直接读取 `results/` 下的原始 JSON/CSV/NPZ 数据动态计算均值、标准差与指标，严禁在绘图代码中硬编码任何实验结果浮点数**；
-   - 统一全套图表的方法配色与命名，双格式导出矢量 `.pdf`（供论文排版直接引用）与高分辨率 `.png`（供视觉检查无文字重叠、无边界裁切、字号清晰）至 `workspaces/<project>/figures/`，并同步更新 `figures/figure_plan.md` 中的实际生成文件路径与关键视觉结论。
+1. **Ⅰ 类：基础设施与物理资源中断**（SSH 断连、抢占实例重启、网络限流）
+   - 保持代码零改动，直接重跑同一 `run_matrix.py run` 命令自动跳过已完成单元无缝续接。
+2. **Ⅱ 类：代码实现 Bug 或算子性能修复**
+   - 在本地修复后必须重过 `test_claims.py`（遵守 Stage 7A 防“改 A 坏 B”三项回归锁）；
+   - **防跨版本混算铁律**：`ledger.jsonl` 只增不删！若修改了公共模块，必须对所有受影响的旧结果执行 `python scripts/run_matrix.py invalidate --ledger ... --pattern "<正则>" --reason "<原因>"` 标记失效后重跑；若仅单改了某个尚未跑完的独立基线文件且完全不影响已完成的无关联条件，经核实后可将新旧 commit 列入 `exp_manifest.json` 的 `compatible_commits`。
+3. **Ⅲ 类：真实科学负结果或消融反转**
+   - **严禁静默删减失败的数据集/种子、暗调 Baseline 或私自删改主方法组件**！完整保留正负结果在 `07_exp_results.md` 中如实报告，涉及主线简化或收缩 Claim 边界一律交由人类研究者拍板。
+
+---
+
+## 三、Step 3：确定性实验图表渲染与 `audit_exp.py` 保真交付
+
+全部计划条件完成并通过 `remote_gpu.py pull` 拉回本地 `workspaces/<project>/experiments/results/` 后：
+
+1. **渲染确定性实验图表与汇总表**：
+   - 对照 `figures/figure_plan.md` 运行 `experiments/plots/plot_*.py`（直接读取 `results/` 原始数据文件，零硬编码数字），导出统一配色的矢量 `.pdf` + `300 DPI .png` 至 `workspaces/<project>/figures/`，并回填 `figures/figure_plan.md` 实测观察结论。
 2. **撰写 `07_exp_results.md` 并执行强制确定性审计**：
-   - 按 `templates/07_exp_results.md` 撰写完整实验报告（核心主表数值建议附 `<!-- @evidence:experiments/results/...#key -->` 溯源注释）；
-   - **交付前必须运行并全绿通过**：
+   - 按 `templates/07_exp_results.md` 撰写结果报告（核心数值附 `<!-- @evidence:experiments/results/...#key -->` 溯源标签），运行并确保零阻断报错通过：
      ```bash
      python scripts/audit_exp.py \
        --manifest workspaces/<project>/experiments/exp_manifest.json \
@@ -71,4 +69,4 @@ description: Stage 7B of ResearchFlow Experimentation. Runs multi-GPU/remote que
        --results-md workspaces/<project>/07_exp_results.md \
        --out workspaces/<project>/experiments/results/audit_report.md
      ```
-   - 若审计提示 `INVESTIGATE_IDENTICAL_METRICS`（两个条件指标完全一致），必须核实到底是消融开关未接通还是该组件确实零影响，并在报告中如实交代；确保 `Blocking Errors` 清零后，向用户交付 `07_exp_results.md` 与 `figures/` 图表成果。
+   - 对 `INVESTIGATE_IDENTICAL_METRICS` 告警逐一核实原因并在报告中交代，确认 `PASS` 后向用户交付完整实验结果与图表包。

@@ -33,7 +33,7 @@
 
 6. **工程自主权与科学决策权严格分离（Engineering Autonomy vs. Scientific Authority）**
    - **充分的工程自主权**：在实验阶段，Agent 拥有自动部署远程环境、修复代码 Bug、在证明条件等价前提下适配显存旋钮、断点续跑以及确定性渲染实验图表的工程自主权。
-   - **严守科学决策与算力边界**：① **未经用户明确确认，严禁直接在宿主本机 CPU/GPU 上运行模型训练或重型实验**；② 严禁私自利用测试集调参选模、静默删减失败条件/种子、混算不兼容代码版本的结果，或在正式实验中擅自删改方法核心组件掩盖负结果——一切涉及实验范围裁剪与方法变更的科学决策必须完整呈现正负证据交由人类研究者拍板。
+   - **严守科学决策、算力与在线只读边界**：① **未经用户明确确认，严禁直接在宿主本机 CPU/GPU 上运行模型训练或重型实验**；② **在线实验默认只读（Inspect-Only）**：当远端实验队列正在运行时，面对用户的状态询问默认只允许只读诊断汇报，未经用户明确授权绝对禁止私自修改代码、杀进程（`kill`）或重启实验；③ 严禁利用测试集调参选模、静默删减失败条件/种子、混算不兼容代码版本结果，或擅自删改核心组件掩盖负结果。
 
 ---
 
@@ -74,8 +74,9 @@
    - 主 Agent 需要查看某篇论文的公式、实验细节或代码实现时，**先读 `papers/<slug>/index.md`（仅数十行）定位文件路径与行号区间**，再用文件读取工具指定起止行号精确加载 **40–120 行**核心片段，禁止无差别整文件读取。
    - 若需要同时深度横向比对 3 个以上代码仓库的实现细节，派生临时阅读子智能体输出带行号引用的专项对比文件供主窗口读取。
 
-3. **阶段交接清窗**
-   - 每个课题独立存放在 `workspaces/<project_slug>/` 下，通过核心状态文档接力：`01_scope.md` → `02_paper_map.md` → `03_idea_discussion.md` → `04_handoff.md` → `05_pilot_report.md` → `06_exp_plan.md` → `07_exp_results.md`。每完成一个阶段（或单轮讨论超过 15–20 回合上下文变重时），先将最新事实、工作假设与决策同步落盘，再建议用户开新窗口或 `/compact` 进入下一阶段。
+3. **阶段交接清窗与防压缩失忆（Anti-Compaction Hygiene）**
+   - 每个课题独立存放在 `workspaces/<project_slug>/` 下，通过状态文档接力：`01_scope.md` → `02_paper_map.md` → `03_idea_discussion.md` → `04_handoff.md` → `05_pilot_report.md` → `06_exp_plan.md` → `07_exp_results.md`。
+   - **严防单窗口跨全流程触发多次上下文压缩（Compaction）导致失忆瞎猜**：禁止在同一会话窗口硬跑上千步贯通全部阶段，也禁止用高频短间隔定时器（`schedule`）反复轮询实验进度（实验监控统一交由零 Token 消耗的确定性看板 `scripts/exp_dashboard.py`）。每完成一个关键阶段（尤其是 Stage 4 定稿后、Stage 6 锁定实验计划后），先同步落盘全部状态，主动建议用户执行 `/compact` 或开启新会话窗口继续下一阶段。
 
 ---
 
@@ -96,13 +97,13 @@
    - 读取：`skills/idea-stage4-review-handoff/SKILL.md`
 
 ### 第二板块：先导验证、实验设计与保真执行（Stage 5–7B）
-5. **阶段 5 — `Gate 0` 先导实证与方法定型**（已有 `04_handoff.md`，准备询问先导算力并在真机上做 1–3 小时最小生死验证时）
+5. **阶段 5 — `Gate 0` 先导实证与方法定型**（已有 `04_handoff.md`，先停顿确认先导算力，再在真机上做 1–3 小时最小生死验证时）
    - 读取：`skills/exp-stage5-pilot/SKILL.md`
-   - 配套确定性工具：`python scripts/remote_gpu.py`（免转义 SSH 密钥初始化、探针、流式同步与非轮询状态巡检）
-6. **阶段 6 — 子领域惯例驱动的实验与数据图表设计**（`05_pilot_report.md` 已锁定最终方法，设计完整实验蓝图 `06_exp_plan.md` 与 `figures/figure_plan.md` 并协商主实验算力时）
+   - 配套确定性工具：`python scripts/remote_gpu.py`（免转义 SSH 初始化、`probe` 四维探针、`exec` 同步短脚本、`push`/`pull` 与守护 `launch`）
+6. **阶段 6 — 文献实证审计驱动的实验与数据图表设计**（`05_pilot_report.md` 已锁定方法，派生子智能体核查前人实验设置、设计 `06_exp_plan.md` 与 `figures/figure_plan.md` 并协商算力时）
    - 读取：`skills/exp-stage6-design/SKILL.md`
-7. **阶段 7A — 实验编码、条件等价适配与科学保真预检**（算力与 `exp_manifest.json` 已锁定，编写实验代码并执行 `test_claims.py`、独立代码盲审与最坏显存压测时）
+7. **阶段 7A — 模块化实验编码、四维资源护栏与终锁盲审**（`exp_manifest.json` 已锁定，模块化编写代码、执行远端真数据全分支冒烟并在定型后执行最终代码盲审时）
    - 读取：`skills/exp-stage7a-coding/SKILL.md`
-8. **阶段 7B — 多卡/远程断点执行、分级自愈与实验图表审计**（代码通过三重预检，挂起单卡/多卡队列、断点恢复、生成确定性实验图表并运行保真审计产出 `07_exp_results.md` 时）
+8. **阶段 7B — 多卡断点执行、零 Token 实时看板与实验保真审计**（代码通过终锁盲审，挂起队列、启动本地实时看板 `exp_dashboard.py`、严守只读诊断红线、生成确定性图表并运行 `audit_exp.py` 产出 `07_exp_results.md` 时）
    - 读取：`skills/exp-stage7b-execution/SKILL.md`
-   - 配套确定性工具：`python scripts/remote_gpu.py`、`python scripts/run_matrix.py`（多卡队列与只增账本 `ledger.jsonl`）、`python scripts/audit_exp.py`（覆盖率、版本溯源与图表反硬编码审计）
+   - 配套确定性工具：`python scripts/remote_gpu.py`、`python scripts/run_matrix.py`、`python scripts/exp_dashboard.py`、`python scripts/audit_exp.py`

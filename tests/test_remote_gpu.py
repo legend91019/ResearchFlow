@@ -68,10 +68,50 @@ def test_launch_script_sets_cache_and_exit_code() -> None:
         gpu_devices="0",
     )
     assert "HF_HOME=" in script
+    assert "TMPDIR=" in script
+    assert "PIP_CACHE_DIR=" in script
     assert "MODELSCOPE_CACHE=" in script
     assert "CUDA_VISIBLE_DEVICES=0" in script
     assert "/root/autodl-tmp/rf_exp/.rf_jobs/gate0_run/exit_code" in script
     assert "nohup setsid bash" in script
+
+
+def test_exec_streams_python_script_over_stdin(tmp_path: Path) -> None:
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    script_file = tmp_path / "quick_check.py"
+    script_file.write_text("import os\nprint('quote_safe:', \"a'b\\\"c\")\n", encoding="utf-8")
+    remote_gpu.save_profile(
+        ws,
+        remote_gpu.RemoteProfile(
+            host="gpu.example.com",
+            port=44,
+            user="znsoft",
+            key_path=str(ws / ".ssh" / "id_ed25519"),
+            remote_dir="/home/znsoft/rf_ws",
+        ),
+    )
+
+    captured: list[tuple[str, bytes]] = []
+
+    def fake_runner(
+        profile: remote_gpu.RemoteProfile,
+        remote_cmd: str,
+        stdin_bytes: bytes | None,
+        timeout: int,
+    ) -> subprocess.CompletedProcess[bytes]:
+        captured.append((remote_cmd, stdin_bytes or b""))
+        return subprocess.CompletedProcess(args=["ssh"], returncode=0, stdout=b"quote_safe: a'b\"c\n", stderr=b"")
+
+    parser = remote_gpu.build_parser()
+    out = remote_gpu.cmd_exec(
+        parser.parse_args(["exec", "--workspace", str(ws), "--script", str(script_file), "--gpu", "0"]),
+        runner=fake_runner,
+    )
+    assert out["status"] == "ok"
+    assert "python3 -" in captured[0][0]
+    assert "TMPDIR=/home/znsoft/rf_ws/.cache/tmp" in captured[0][0]
+    assert b"quote_safe:" in captured[0][1]
 
 
 def test_status_enrichment_detects_oom_and_low_gpu_util() -> None:

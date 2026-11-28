@@ -489,13 +489,21 @@ for line in raw_procs.splitlines():
         gpu_procs.append({{"pid": parts[0], "name": parts[1], "vram_mb": parts[2]}})
 
 disks = {{}}
-for mount in ["/", "/root/autodl-tmp", "/hy-tmp", "/data", remote_dir]:
+for mount in ["/", "/home", "/tmp", "/root/autodl-tmp", "/hy-tmp", "/data", remote_dir]:
     if os.path.exists(mount):
         usage = shutil.disk_usage(mount)
         disks[mount] = {{
             "total_gb": round(usage.total / (1024**3), 2),
             "free_gb": round(usage.free / (1024**3), 2),
         }}
+
+tmp_is_tmpfs = False
+if os.path.exists("/proc/mounts"):
+    for ln in open("/proc/mounts", encoding="utf-8", errors="ignore"):
+        ps = ln.split()
+        if len(ps) >= 3 and ps[1] == "/tmp" and ps[2] == "tmpfs":
+            tmp_is_tmpfs = True
+            break
 
 mem_total_gb, mem_avail_gb = 0.0, 0.0
 if os.path.exists("/proc/meminfo"):
@@ -521,10 +529,20 @@ try:
 except Exception:
     pass
 
+transformers_ver = ""
+try:
+    import transformers
+    transformers_ver = str(getattr(transformers, "__version__", ""))
+except Exception:
+    pass
+
 warnings = []
 root_free = disks.get("/", {{}}).get("free_gb", 999.0)
-if root_free < 15.0:
-    warnings.append(f"Root disk '/' has only {{root_free}} GB free; keep HF_HOME/TORCH_HOME on a data mount.")
+if root_free < 20.0:
+    warnings.append(f"Root disk '/' has only {{root_free}} GB free; keep caches and checkpoints on remote_dir.")
+if tmp_is_tmpfs:
+    tmp_free = disks.get("/tmp", {{}}).get("free_gb", 0.0)
+    warnings.append(f"'/tmp' is RAM-backed tmpfs ({{tmp_free}} GB); launch/exec auto-redirects TMPDIR to remote_dir/.cache/tmp.")
 
 print(json.dumps({{
     "cpu_cores": os.cpu_count() or 1,
@@ -533,8 +551,10 @@ print(json.dumps({{
     "gpus": gpus,
     "gpu_processes": gpu_procs,
     "disks": disks,
+    "tmp_is_tmpfs": tmp_is_tmpfs,
     "python_version": sys.version.split()[0],
     "torch": torch_info,
+    "transformers_version": transformers_ver,
     "has_py_spy": bool(shutil.which("py-spy")),
     "remote_dir": remote_dir,
     "warnings": warnings,
@@ -564,7 +584,11 @@ def build_launch_script(
     runner_lines = [
         "#!/usr/bin/env bash",
         "set -uo pipefail",
-        f"mkdir -p {posix_quote(cache_root)}/huggingface {posix_quote(cache_root)}/modelscope {posix_quote(cache_root)}/torch",
+        f"mkdir -p {posix_quote(cache_root)}/huggingface {posix_quote(cache_root)}/modelscope {posix_quote(cache_root)}/torch {posix_quote(cache_root)}/tmp {posix_quote(cache_root)}/pip",
+        f"export TMPDIR=\"${{TMPDIR:-{cache_root}/tmp}}\"",
+        "export TEMP=\"$TMPDIR\"",
+        "export TMP=\"$TMPDIR\"",
+        f"export PIP_CACHE_DIR=\"${{PIP_CACHE_DIR:-{cache_root}/pip}}\"",
         f"export HF_HOME=\"${{HF_HOME:-{cache_root}/huggingface}}\"",
         f"export MODELSCOPE_CACHE=\"${{MODELSCOPE_CACHE:-{cache_root}/modelscope}}\"",
         f"export TORCH_HOME=\"${{TORCH_HOME:-{cache_root}/torch}}\"",
@@ -897,6 +921,58 @@ fi"""
     return {"job_id": job_id, "snapshot": out.strip()}
 
 
+def cmd_exec(args: argparse.Namespace, runner: SshRunner = default_ssh_runner) -> dict[str, Any]:
+    """Run a short synchronous bash or Python snippet remotely via stdin (zero shell-quoting issues)."""
+    workspace = Path(args.workspace).resolve()
+    profile = load_profile(workspace)
+    work_path = (
+        f"{profile.remote_dir.rstrip('/')}/{args.workdir.strip('/')}"
+        if (args.workdir or "").strip("/")
+        else profile.remote_dir.rstrip("/")
+    )
+    cache_root = f"{profile.remote_dir.rstrip('/')}/.cache"
+
+    lang = (args.lang or "").strip().lower()
+    payload_text = ""
+    if args.script:
+        script_p = Path(args.script).resolve()
+        if not script_p.is_file():
+            raise FileNotFoundError(f"Local script not found: {script_p}")
+        payload_text = script_p.read_text(encoding="utf-8")
+        if not lang:
+            lang = "python" if script_p.suffix.lower() == ".py" else "bash"
+    elif args.stdin:
+        payload_text = sys.stdin.read()
+    elif args.cmd:
+        payload_text = args.cmd
+    else:
+        raise ValueError("Provide one of `--cmd`, `--script`, or `--stdin` for `exec`.")
+
+    if not lang:
+        lang = "bash"
+
+    env_setup = (
+        f"mkdir -p {posix_quote(work_path)} {posix_quote(cache_root)}/tmp {posix_quote(cache_root)}/huggingface "
+        f"{posix_quote(cache_root)}/modelscope {posix_quote(cache_root)}/torch {posix_quote(cache_root)}/pip && "
+        f"export TMPDIR={posix_quote(cache_root + '/tmp')} TEMP={posix_quote(cache_root + '/tmp')} "
+        f"TMP={posix_quote(cache_root + '/tmp')} PIP_CACHE_DIR={posix_quote(cache_root + '/pip')} "
+        f"HF_HOME={posix_quote(cache_root + '/huggingface')} MODELSCOPE_CACHE={posix_quote(cache_root + '/modelscope')} "
+        f"TORCH_HOME={posix_quote(cache_root + '/torch')} PYTHONUNBUFFERED=1"
+    )
+    if args.gpu:
+        env_setup += f" CUDA_VISIBLE_DEVICES={posix_quote(args.gpu)}"
+
+    interp = "python3 -" if lang == "python" else "bash -s"
+    remote_cmd = f"{env_setup} && cd {posix_quote(work_path)} && {interp}"
+    res = runner(profile, remote_cmd, payload_text.encode("utf-8"), int(args.timeout))
+    return {
+        "status": "ok" if res.returncode == 0 else "failed",
+        "exit_code": res.returncode,
+        "stdout": res.stdout.decode("utf-8", errors="replace"),
+        "stderr": res.stderr.decode("utf-8", errors="replace"),
+    }
+
+
 def cmd_kill(args: argparse.Namespace, runner: SshRunner = default_ssh_runner) -> dict[str, Any]:
     profile = load_profile(Path(args.workspace).resolve())
     job_id = validate_job_id(args.job_id)
@@ -964,6 +1040,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_prof.add_argument("--workspace", required=True)
     p_prof.add_argument("--job-id", required=True)
 
+    p_exec = sub.add_parser("exec", help="Execute a short command or Python/bash script synchronously via stdin.")
+    p_exec.add_argument("--workspace", required=True)
+    p_exec.add_argument("--cmd", default="", help="Inline bash/python snippet.")
+    p_exec.add_argument("--script", default="", help="Local `.py` or `.sh` file to stream over stdin.")
+    p_exec.add_argument("--stdin", action="store_true", help="Read snippet from local stdin.")
+    p_exec.add_argument("--lang", choices=["", "bash", "python"], default="", help="Interpreter (`bash` or `python`).")
+    p_exec.add_argument("--workdir", default="", help="Relative subdirectory under remote_dir.")
+    p_exec.add_argument("--gpu", default="", help="Optional CUDA_VISIBLE_DEVICES value.")
+    p_exec.add_argument("--timeout", type=int, default=120, help="Timeout in seconds (default: 120).")
+
     p_kill = sub.add_parser("kill", help="Terminate a detached remote job's entire process group.")
     p_kill.add_argument("--workspace", required=True)
     p_kill.add_argument("--job-id", required=True)
@@ -982,12 +1068,13 @@ def main(argv: list[str] | None = None) -> int:
         "launch": cmd_launch,
         "status": cmd_status,
         "profile": cmd_profile,
+        "exec": cmd_exec,
         "kill": cmd_kill,
     }
     try:
         out = dispatch[args.subcommand](args)
         print(json.dumps(out, indent=2, ensure_ascii=False))
-        return 0
+        return 0 if out.get("status") != "failed" else int(out.get("exit_code") or 1)
     except Exception as exc:
         print(json.dumps({"status": "error", "error": str(exc)}, indent=2, ensure_ascii=False), file=sys.stderr)
         return 1

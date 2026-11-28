@@ -31,6 +31,7 @@ import os
 from pathlib import Path
 import queue
 import re
+import shlex
 import subprocess
 import sys
 import threading
@@ -200,7 +201,11 @@ def execute_one_condition(
     eval_sha: str,
 ) -> dict[str, Any]:
     cid = str(item["condition_id"]).strip()
-    cmd = str(item["command"]).strip()
+    raw_cmd = item["command"]
+    if isinstance(raw_cmd, list):
+        cmd = subprocess.list2cmdline([str(x) for x in raw_cmd]) if os.name == "nt" else shlex.join([str(x) for x in raw_cmd])
+    else:
+        cmd = str(raw_cmd).strip()
     metrics_rel = str(item.get("metrics_file", "")).strip()
     safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", cid)
     log_file = log_dir / f"{safe_name}.log"
@@ -222,9 +227,20 @@ def execute_one_condition(
 
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
+    if os.name != "nt":
+        tmp_dir = base_dir / ".cache" / "tmp"
+        tmp_dir.mkdir(parents=True, exist_ok=True)
+        env.setdefault("TMPDIR", str(tmp_dir))
     env.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
     if gpu_slot is not None:
         env["CUDA_VISIBLE_DEVICES"] = gpu_slot
+    custom_env = item.get("env")
+    if isinstance(custom_env, dict):
+        for k, v in custom_env.items():
+            if v is None or v == "":
+                env.pop(str(k), None)
+            else:
+                env[str(k)] = str(v)
 
     t0 = time.monotonic()
     with log_file.open("ab") as lf:

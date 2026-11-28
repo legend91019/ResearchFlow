@@ -1,17 +1,18 @@
 <p align="center">
-  <img src="docs/assets/banner.svg" width="900" alt="ResearchFlow Banner">
+  <img src="docs/assets/banner.svg" width="940" alt="ResearchFlow Architecture Banner">
 </p>
 
 <h3 align="center">
-  <b>Don't Rebuild the Agent Runtime. Engineer How Coding Agents Conduct Scientific Research.</b>
+  <b>Don't Rebuild the Agent Runtime. Engineer How Coding Agents Conduct Real Scientific Research.</b>
 </h3>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License"></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10+"></a>
-  <a href="pyproject.toml"><img src="https://img.shields.io/badge/Dependencies-Zero_Core_Deps-brightgreen" alt="Zero Core Dependencies"></a>
-  <a href="AGENTS.md"><img src="https://img.shields.io/badge/Host_Agents-Claude_Code_%7C_Codex_%7C_Antigravity-6366f1" alt="Compatible Host Agents"></a>
-  <a href="tests/"><img src="https://img.shields.io/badge/Tests-Passing-success?logo=pytest&logoColor=white" alt="Tests Passing"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/Version-v0.3.1-0ea5e9?style=flat-square" alt="Version 0.3.1"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-f59e0b?style=flat-square" alt="MIT License"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/Core_Deps-Zero_(Stdlib_Only)-10b981?style=flat-square" alt="Zero Core Dependencies"></a>
+  <a href="AGENTS.md"><img src="https://img.shields.io/badge/Host_Agents-Claude_Code_%7C_Codex_%7C_Antigravity-6366f1?style=flat-square" alt="Host Agents"></a>
+  <a href="tests/"><img src="https://img.shields.io/badge/Tests-Passing-22c55e?style=flat-square&logo=pytest&logoColor=white" alt="Tests Passing"></a>
 </p>
 
 <p align="center">
@@ -19,349 +20,260 @@
 </p>
 
 <p align="center">
+  <a href="#-at-a-glance">At a Glance</a> ·
   <a href="#-why-researchflow">Why ResearchFlow?</a> ·
-  <a href="#-architecture-research-workspace-protocol">Architecture</a> ·
-  <a href="#-the-4-stage-ideation-workflow">4-Stage Workflow</a> ·
+  <a href="#️-architecture">Architecture</a> ·
+  <a href="#-the-8-stage-research-lifecycle">8-Stage Lifecycle</a> ·
+  <a href="#️-system-comparison">Comparison</a> ·
   <a href="#-quick-start">Quick Start</a> ·
-  <a href="#-comparison-with-existing-systems">System Comparison</a> ·
-  <a href="#️-cli-utilities">CLI Utilities</a> ·
-  <a href="#️-roadmap">Roadmap</a>
+  <a href="#️-zero-dependency-cli-toolkit">CLI Toolkit</a>
 </p>
 
 ---
 
-## 🔥 News
+## ✨ At a Glance
 
-- **[2026-11] `v0.3.0` Experiment Pilot, Design & Execution Release** — Extending ResearchFlow from ideation into full-cycle rigorous experimentation (**Stages 5 → 7B**):
-  - **Compute-Gated `Gate 0` Pilot ([`exp-stage5-pilot`](skills/exp-stage5-pilot/SKILL.md))**: Confirms target compute upfront (never silently saturating the local host), executes 1–3h confound-controlled falsification pilots via [`remote_gpu.py`](scripts/remote_gpu.py), captures real `ms/step` & VRAM baselines, and locks the parsimonious method specification (`05_pilot_report.md`);
-  - **Subfield-Grounded Experiment & Data-Figure Blueprint ([`exp-stage6-design`](skills/exp-stage6-design/SKILL.md))**: Reads back Stage 1–4 benchmark conventions (`02_paper_map.md` §5, `04_handoff.md` §4–5, `papers/*/notes.md`), separates actual GPU runs from zero-GPU derived views (*Log Once, Slice Many*), outputs a dual-track [`figures/figure_plan.md`](templates/figure_plan.md), and estimates GPU-hours for transparent compute/seed negotiation (`06_exp_plan.md`);
-  - **Conditional-Equivalent Coding & Multi-GPU Audited Execution ([`exp-stage7a-coding`](skills/exp-stage7a-coding/SKILL.md), [`exp-stage7b-execution`](skills/exp-stage7b-execution/SKILL.md), [`run_matrix.py`](scripts/run_matrix.py), [`audit_exp.py`](scripts/audit_exp.py))**: Enforces surgical official-repo baseline reuse, 3-tier parameter fairness, conditional-equivalent micro-batch scaling, mechanism-aware trigger tests (`test_claims.py`), worst-case VRAM probes, multi-GPU append-only ledger queues with version invalidation, and deterministic coverage/provenance/plotting audits (`07_exp_results.md`).
-- **[2026-11] `v0.2.0` Ideation Hardening Release** — Upgraded retrieval, anti-accretion ideation, and falsification review based on 4-domain backtest & postmortem diagnostics:
-  - **Zero-Blind-Spot Retrieval ([`cite_graph.py`](scripts/cite_graph.py))**: Dual-provider S2 + OpenAlex merge with **3-tier temporal balancing** (latest preprints `C` + 1–2 year venue backbone `B_recent` + foundational classics `B_early`), **`--scan-bib`** zero-API 2-hop local `.bib` co-citation radar, **`--arxiv-recent`** zero-lag preprint stream, and **`--before-date`** temporal cutoffs for leak-free retrospective backtesting;
-  - **Anti-Accretion Ideation ([`idea-stage3-ideation`](skills/idea-stage3-ideation/SKILL.md))**: Enforces a 1–2 tightly coupled primitive complexity cap, separates clean baseline bugfixes from core scientific claims, and triggers mandatory search-back whenever new sub-mechanisms are introduced;
-  - **Coupled Falsification & Pilot-First Handoff ([`idea-stage4-review-handoff`](skills/idea-stage4-review-handoff/SKILL.md), [`04_handoff.md`](templates/04_handoff.md))**: Adds minimum-novel-core peeling, elementary-baseline dominance checks, end-to-end coupled state-machine Python simulations, and a **`Gate 0` (1–3h Pilot Falsification Test with Go/No-Go thresholds)** ahead of the full Main Table.
-- **[2026-11] `v0.1.0` Initial Release** — Launching **ResearchFlow** with the **Phase I: Evidence-Grounded Ideation & Literature Mapping** workspace protocol.
+**ResearchFlow** is a lightweight **Research Workspace Protocol** designed to run natively inside modern coding agents (**Claude Code**, **Codex**, **Antigravity**). Instead of maintaining 70,000+ lines of brittle `while True: llm.chat()` plumbing, ResearchFlow equips your host coding agent with **stage-scoped scientific skills**, **context-isolated subagent audits**, and **zero-dependency Python stdlib CLIs**:
+
+| Core Capability | What ResearchFlow Enforces | Failure Mode Eliminated |
+| :--- | :--- | :--- |
+| **📖 Lossless Primary Sources** | `fetch_paper.py` unpacks original arXiv `.tex`, `macros.tex`, and shallow-clones official GitHub repos with exact `file:Lstart-Lend` indices (`index.md`). | Lossy `Abstract → Card → Summary` telephone-game distortion. |
+| **🧭 Zero-Blind-Spot Retrieval** | `cite_graph.py` merges S2 + OpenAlex across **3 temporal buckets** (`latest` / `mid-horizon` / `foundational`) + `--scan-bib` 2-hop `.bib` radar + `--arxiv-recent` zero-lag stream. | Missing 0-citation preprints, counter-evidence, or OpenReview competitors. |
+| **🪒 Anti-Accretion & Blind Critic** | Caps novelty at **1–2 tightly coupled primitives**, separates `Baseline-Clean` bugfixes, and runs a history-isolated `Critical Reviewer` with coupled Python simulations. | 4-module "patchwork monsters" and confirmation-bias self-approval. |
+| **🧪 Compute-Gated `Gate 0` Pilot** | Confirms compute upfront (never silently taxing the local host) and runs a 1–3h $2\times 2$ falsification pilot (`05_pilot_report.md`) *before* full benchmark design. | Burning 100 GPU-hours on an empirically dead or over-complicated idea. |
+| **🛡️ 4D Preflight & Final-Lock Audit** | Modular plugin architecture, 4D hardware guards (`VRAM` + `CPU RAM` + `Disk` + `/tmp tmpfs`), real-data all-branch smoke via `remote_gpu.py exec`, and a **post-optimization** `Code-to-Claim` blind audit. | Strawman baselines, silent `batch_size` math drift, late-stage OOMs, and whack-a-mole patch regressions. |
+| **📊 Zero-Token Live Kanban & Audit** | `exp_dashboard.py` serves a local real-time web Kanban over append-only `ledger.jsonl`, paired with **Inspect-Only** live run protection and `audit_exp.py` provenance checks. | Context-exploding `schedule` polling loops, unauthorized mid-run tampering, and hardcoded plot numbers. |
+
+---
+
+## 🔥 Recent Releases
+
+- **`v0.3.1` — Battle-Hardened Experimentation & Live Kanban**: Added `Experiment Setup Auditor Subagent` (`stage6_exp_conventions.md`), `remote_gpu.py exec` quote-free runner & `/tmp` `tmpfs` isolation, modular plugin coding rules, reordered final-lock `Code-to-Claim` audit, **Inspect-Only** live run protection, optional on-demand runtime budgeting, and the zero-token live web dashboard [`exp_dashboard.py`](scripts/exp_dashboard.py).
+- **`v0.3.0` — Full Experimentation Loop (Stages 5 → 7B)**: Added compute-gated `Gate 0` pilots, *Log Once, Slice Many* experiment/figure planning (`figure_plan.md`), conditional-equivalent hardware adaptation, multi-GPU queue runner [`run_matrix.py`](scripts/run_matrix.py), and post-run verifier [`audit_exp.py`](scripts/audit_exp.py).
+- **`v0.2.0` — Ideation Hardening**: Added 3-tier citation balancing, `--scan-bib` 2-hop co-citation radar, `--arxiv-recent`, `--before-date` backtesting cutoffs, Occam anti-accretion caps, and coupled state-machine falsification reviews.
 
 ---
 
 ## 🤔 Why ResearchFlow?
 
-Most open-source "autonomous research" repositories promise *"One Command → One Full Paper."* In practice, when researchers actually use them on frontier AI topics, **ideation is where autonomous pipelines fail hardest**:
+Most open-source "autonomous research" pipelines promise *"One Command → One Full Paper."* When tested on real frontier ML topics, they break down in two predictable places:
 
-1. **Lossy Summarization Drift (`Abstract → Card → Synthesis → Idea`)**
-   Compressing 800-character abstracts into knowledge cards and then into a single summary strips away exact mathematical formulations, implicit assumptions, hyperparameter confounders, and table footnotes. By the time the LLM proposes a hypothesis, it is reasoning over distorted second-hand slogans.
-2. **Shooting the Arrow Before Drawing the Target**
-   Many pipelines ask an LLM to invent a *"Novel Angle"*, *"Expected SOTA Gain"*, and *"Target Benchmark"* at Stage 1 from parametric priors **before reading a single real paper**, polluting downstream stages with hallucinated premises.
-3. **Single-Line Echo Chambers & Missing Counter-Evidence**
-   Keyword APIs sorted by citation count bury brand-new 0-citation competitors from the last 6–12 months and miss negative/reproduction studies or analogous mathematical mechanisms in adjacent subfields.
-4. **Context Pollution & Sycophantic Drift**
-   Dumping dozens of raw web searches and full PDFs into one chat window dilutes model attention, while sycophantic agents eagerly abandon a solid research direction whenever the human asks an exploratory *"what-if"* question.
-5. **70,000+ Lines of Reinvented Agent Plumbing**
-   Maintaining custom `while True: llm.chat()` loops, brittle regex parsers, and bespoke CLIs duplicates what modern coding agents (**Claude Code**, **Codex**, **Antigravity**) already do natively—and far more reliably.
+### 1. Where Autonomous Pipelines Fail in **Ideation**
+- **Shooting Before Drawing the Target**: Inventing a *"Novel Angle"* and *"Expected +8% Gain"* at Stage 1 before reading a single real paper.
+- **800-Character Abstract Compression**: Stripping away theorem assumptions, custom LaTeX macros, appendix ablations, and undocumented tricks in official codebases.
+- **Context Pollution & Sycophantic Drift**: Flooding a single chat window with raw searches until repeated context compactions cause amnesia and parameter-prior guessing.
 
-### Our Core Thesis
+### 2. Where Autonomous Pipelines Fail in **Experimentation**
+- **Premature Toy Downgrading vs. Unbudgeted Cartesian Explosions**: Either collapsing LLM/vision ideas into 8-condition MLP toys, or scheduling 200+ runs by guessing peer dataset sizes without checking `8× H100` vs. `1× 24GB/48GB` conventions.
+- **Silent Scientific Invalidation on OOM**: Halving `batch_size` on `CUDA OOM` without scaling `grad_accum_steps` or checking `optimizer.step()` / subspace-hook boundaries—changing optimization dynamics behind the researcher's back.
+- **1,600-Line Monolithic God-Scripts & Early-Audit Drift**: Packing 15 baselines into one `if/elif` script where fixing memory for Baseline A breaks OOM recovery for Baseline B, after code review already finished.
 
-> **ResearchFlow is not another standalone multi-agent framework. It is a *Research Workspace Protocol*.**
-> The **Host Agent** provides execution, web search, and subagent isolation; **Skills** govern scientific epistemology and context hygiene; **Disk Artifacts** maintain the single auditable source of truth; and the **Human Researcher** owns every critical scientific decision.
+> **Our Core Principle — Engineering Autonomy vs. Scientific Authority:**
+> The **Agent** has full engineering autonomy to sync SSH environments, profile bottlenecks, recover from crashes, and render deterministic vector plots—but **zero unauthorized authority** to run heavy workloads on your local machine, alter scientific claims, tune on test splits, silently drop failed seeds, or kill/modify a live experiment without your explicit approval.
 
 ---
 
-## 🏛️ Architecture: Research Workspace Protocol
+## 🏛️ Architecture
 
 ```mermaid
 flowchart TB
-    Human["👤 Human Researcher<br/>Scope Selection · Assumption Challenges · Final Decisions"]
-    Host["🧠 Host Main Agent (Claude Code / Codex / Antigravity)<br/>Scientific Dialogue · JIT Line-Range Inspection · State Transitions"]
+    Human["👤 Human Researcher<br/>Scope & Idea Challenges · Compute Negotiation · Method & Boundary Decisions"]
+    Host["🧠 Host Coding Agent (Claude Code / Codex / Antigravity)<br/>JIT Line-Range Reasoning · Modular Plugin Coding · State Transitions"]
+    Kanban["📊 Local Live Kanban (exp_dashboard.py)<br/>http://127.0.0.1:8765 · Zero Agent Tokens"]
 
-    subgraph Protocol["📜 Protocol & Modular Skills"]
-        Constitution["AGENTS.md / CLAUDE.md<br/>Epistemic Rules · Explore/Challenge/Refine/Pivot"]
-        S1["idea-stage1-landscape"]
-        S2["idea-stage2-literature-map"]
-        S3["idea-stage3-ideation"]
-        S4["idea-stage4-review-handoff"]
+    subgraph Protocol["📜 Stage-Scoped Protocol & Skills"]
+        Const["AGENTS.md / CLAUDE.md<br/>4-Way Evidence · Anti-Accretion · Inspect-Only Live Rule"]
+        P1["Phase I: Ideation<br/>idea-stage1 .. idea-stage4"]
+        P2["Phase II: Experimentation<br/>exp-stage5 · stage6 · stage7a · stage7b"]
     end
 
-    subgraph Subagents["🛡️ Context-Isolated Subagents (Disposable Context)"]
-        SubSurvey["Survey Subagent<br/>Taxonomy & Surveys"]
-        SubDeep["Deep Search Subagent<br/>4-Angle Retrieval + Audit"]
-        SubReader["Paper Reader Subagents<br/>L1–L3 Source & Code Audit"]
-        SubCritic["Critical Reviewer Subagent<br/>History-Isolated Falsification"]
+    subgraph Subagents["🛡️ Disposable Context-Isolated Subagents"]
+        Sub1["Survey & 4-Angle Search Subagents"]
+        Sub2["L1–L3 Paper & Repo Reader Subagents"]
+        Sub3["Blind Critical Reviewer (Stage 4)"]
+        Sub4["Experiment Setup Auditor (Stage 6)"]
+        Sub5["Final-Lock Code-to-Claim Auditor (Stage 7A)"]
     end
 
-    subgraph Tools["⚙️ Deterministic CLI Tools (scripts/)"]
-        CiteGraph["cite_graph.py<br/>S2 + OpenAlex Bidirectional Graph"]
-        FetchPaper["fetch_paper.py<br/>Lossless arXiv Source + Line Index + Repo Clone"]
+    subgraph Tools["⚙️ Zero-Dependency Python Stdlib CLIs (scripts/)"]
+        T1["cite_graph.py · fetch_paper.py"]
+        T2["remote_gpu.py (init/probe/exec/push/launch/status)"]
+        T3["run_matrix.py · exp_dashboard.py · audit_exp.py"]
     end
 
-    subgraph Disk["💾 Persistent Workspace State (workspaces/&lt;project&gt;/)"]
-        F1["01_scope.md"]
-        F2["02_paper_map.md"]
-        F3["03_idea_discussion.md"]
-        F4["04_handoff.md"]
-        Papers["papers/&lt;slug&gt;/<br/>source/ · index.md · notes.md · repo/"]
-        Logs["search_logs/<br/>Near-Miss Audit · Critical Review"]
+    subgraph Disk["💾 Auditable Workspace State (workspaces/&lt;project&gt;/)"]
+        D1["01_scope.md → 02_paper_map.md → 03_idea_discussion.md → 04_handoff.md"]
+        D2["05_pilot_report.md → 06_exp_plan.md → figures/figure_plan.md → 07_exp_results.md"]
+        D3["papers/&lt;slug&gt;/ (source/ · repo/ · index.md · notes.md) &amp; results/ledger.jsonl"]
     end
 
     Human <--> Host
+    Human -.->|"Real-Time Read-Only View"| Kanban
     Protocol --> Host
     Host --> Subagents
     Subagents --> Tools
     Host --> Tools
+    Kanban --> Tools
     Subagents --> Disk
     Host <--> Disk
 ```
 
-### Four Architectural Pillars
+---
 
-| Pillar | Mechanism in ResearchFlow | Problem Solved |
-| :--- | :--- | :--- |
-| **1. Epistemic 4-Way Split** | Every note and discussion explicitly separates `[Author Claim]`, `[Experimental Evidence]` (including uncontrolled confounders), `[Agent Inference]`, and `[Working Assumption]`. | Stops the agent from treating prior papers' introduction hype as proven scientific fact. |
-| **2. Unmodified Ground Truth + JIT Indexing** | `fetch_paper.py` preserves `papers/<slug>/source/` (`main.tex`, `macros.tex`, `appendix.tex`) 100% untouched and builds a line-accurate `index.md`. The main agent loads only **40–120 lines** on demand. | Zero compression drift on equations/tables while keeping main chat context razor-thin. |
-| **3. Subagent Isolation + Near-Miss Audit** | Heavy search and full-paper reading run inside disposable subagents. Search subagents must log a **Borderline Excluded (Top 5–10)** table in `search_logs/`. | Prevents raw search clutter in the main window while letting humans catch false-negative exclusions in 10 seconds. |
-| **4. `Explore` / `Challenge` / `Refine` / `Pivot` + Blind Critic** | Distinguishes casual *"what-if"* exploration from root-assumption challenges, and runs a **history-isolated `Critical Reviewer`** before experimental handoff. | Prevents both sycophantic topic drift and confirmation-bias lock-in on flawed ideas. |
+## 🔬 The 8-Stage Research Lifecycle
+
+Each stage loads **only one active `SKILL.md`** and persists clean state files to `workspaces/<project>/`, letting you run `/compact` or open a fresh chat window between phases with zero context degradation.
+
+### Phase I — Evidence-Grounded Ideation (`Stages 1 → 4`)
+
+| Stage | Skill | Core Mechanism | Output Artifact |
+| :--- | :--- | :--- | :--- |
+| **Stage 1**<br/>Landscape & Scope | [`idea-stage1-landscape`](skills/idea-stage1-landscape/SKILL.md) | Survey-first taxonomy discovery (or **1–3 seed-paper fast-track**); formal prerequisite definitions before locking an `A → B → C` lineage branch. | `01_scope.md` |
+| **Stage 2**<br/>4-Angle Paper Map | [`idea-stage2-literature-map`](skills/idea-stage2-literature-map/SKILL.md) | 3-tier citation graph + `--arxiv-recent` + OpenReview/Workshops + dual operators + mandatory counter-evidence + `--scan-bib` 2-hop `.bib` radar; parallel `L1–L3` source/repo audits. | `02_paper_map.md`<br/>`papers/*/notes.md` |
+| **Stage 3**<br/>Parsimonious Ideation | [`idea-stage3-ideation`](skills/idea-stage3-ideation/SKILL.md) | Conflict/confound & repo-surgery lenses; **1–2 primitive complexity cap**; `Baseline-Clean` separation; mandatory component search-back; `Explore / Challenge / Refine / Pivot` tracking. | `03_idea_discussion.md` |
+| **Stage 4**<br/>Blind Falsification | [`idea-stage4-review-handoff`](skills/idea-stage4-review-handoff/SKILL.md) | History-isolated `Critical Reviewer`: minimum-novel-core peeling, `L2` appendix scoop checks, elementary dominance check, coupled Python simulation, and `Gate 0` Go/No-Go design. | `04_handoff.md`<br/>`critical_review.md` |
+
+### Phase II — Pilot Lock, Blueprint Design & Audited Execution (`Stages 5 → 7B`)
+
+| Stage | Skill | Core Mechanism & Human Touchpoints (`⏸️`) | Output Artifact |
+| :--- | :--- | :--- | :--- |
+| **Stage 5**<br/>`Gate 0` Pilot Lock | [`exp-stage5-pilot`](skills/exp-stage5-pilot/SKILL.md) | `⏸️` **Confirm pilot GPU upfront** (never silently runs on host). Runs unit tests, 15s throughput/VRAM probe, and 1–3h $2\times 2$ pilot via `remote_gpu.py`. `⏸️` **Locks `GO / SIMPLIFY / PIVOT`**. | `05_pilot_report.md` |
+| **Stage 6**<br/>Audited Exp Plan | [`exp-stage6-design`](skills/exp-stage6-design/SKILL.md) | Spawns `Experiment Setup Auditor` to verify peer dataset splits, GPU scale, and multi-model norms (`stage6_exp_conventions.md`); separates **GPU Runs** vs. **Zero-GPU Derived Views**; writes dual-track `figure_plan.md`; optional time budgeting. `⏸️` **Negotiates compute & scope**. | `06_exp_plan.md`<br/>`figures/figure_plan.md`<br/>`exp_manifest.json` |
+| **Stage 7A**<br/>4D Preflight & Lock | [`exp-stage7a-coding`](skills/exp-stage7a-coding/SKILL.md) | Modular `methods/*.py` plugins + SHA-256 `eval_harness.py`; 4D guards (`VRAM` / `CPU RAM` / `Disk` / `/tmp tmpfs` / baseline latency); Gate 1 (`test_claims.py` + mock OOM) → Gate 2 (remote 2-step all-branch smoke via `remote_gpu.py exec`) → **Gate 3 (final-lock `Code-to-Claim` blind audit)**. | `experiments/*`<br/>`stage7a_code_audit.md` |
+| **Stage 7B**<br/>Execution & Audit | [`exp-stage7b-execution`](skills/exp-stage7b-execution/SKILL.md) | Multi-GPU queue (`run_matrix.py`) over append-only `ledger.jsonl` (`invalidate` prevents version mixing); **zero-token live Kanban (`exp_dashboard.py`)**; **Inspect-Only** live run protection; vector `.pdf/.png` plotting + deterministic `audit_exp.py` gate. | `07_exp_results.md`<br/>`figures/*.pdf` |
 
 ---
 
-## 🔬 The 4-Stage Ideation Workflow
+## ⚖️ System Comparison
 
-ResearchFlow structures early-stage research into four progressive stages, each governed by an on-demand skill under [`skills/`](skills/) and persisted to a clean Markdown state file:
-
-### Stage 1 — Survey-First Landscape & Scope Lock ([`idea-stage1-landscape`](skills/idea-stage1-landscape/SKILL.md))
-- **Dual Entry Modes**:
-  - *Broad Topic Mode*: Dispatches a `Survey Subagent` to prioritize recent surveys, tutorials, and curated `Awesome-*` repositories (unpacking survey `.tex` taxonomies directly) plus web searches for developments from the last 6–12 months.
-  - *Seed-Paper Fast-Track*: Already have 1–3 target papers? Initialize `01_scope.md` directly and jump straight to Stage 2.
-- **Prerequisite-First Explanation**: Introduces core formal definitions and domain terminology accurately (no hand-wavy analogies) before mapping natural methodological branches, `A → B → C` evolutionary outlines, and realistic GPU/compute envelopes.
-- **Output**: `01_scope.md` (strictly locks the **problem space and lineage branch**, never pre-committing to a premature algorithm).
-
-### Stage 2 — 4-Angle Deep Search & Dynamic `L0–L3` Paper Map ([`idea-stage2-literature-map`](skills/idea-stage2-literature-map/SKILL.md))
-Instead of staying trapped inside one citation clique, the `Deep Search Subagent` is required to retrieve across **four orthogonal angles** plus a local 2-hop `.bib` radar:
-1. **Longitudinal + Zero-Lag Stream (`cite_graph.py`)**: S2 + OpenAlex 3-tier balanced citations (0-citation preprints `C` + recent venue backbone `B_recent` + foundational milestones `B_early`) paired with `--arxiv-recent` to catch 24–72h preprints before web indexers ingest them.
-2. **Lateral**: Competing technical paradigms across `arXiv`, `OpenReview` (including Workshops), and `ACL/CVF` proceedings.
-3. **Mechanistic & Dual Operators**: Analogous or inverse mathematical operators in adjacent subfields (e.g., 1-to-$N$ split relocation vs. $N$-to-1 merge absorption).
-4. **Counter-Evidence (Mandatory)**: Negative results, reproduction failures, hyperparameter sensitivity studies, and critiques (`rethinking`, `revisiting`, `limitations`, `instability`).
-5. **Local 2-Hop Co-Citation Radar (`--scan-bib`)**: Scans unpacked `papers/*/source/*.bib` files at zero API cost to surface unarchived papers frequently co-cited by frontier works.
-
-Selected papers (typically 15–25) are read by parallel `Paper Reader Subagents` at dynamically upgradable depths:
-- **`L0` Screened** → **`L1` Mechanism & Main Table** → **`L2` Full Text, Proofs & Appendix** (mandatory for close recent competitors) → **`L3` Official Codebase Audit** (`repo/` commit-pinned, verifying whether actual code matches paper equations or hides undocumented tricks).
-- **Direct Baselines (strictly 1–3 papers)** must be solid, open-source, recognized, and recent.
-- **Output**: Non-strawman `02_paper_map.md` + per-paper `papers/<slug>/notes.md` + `search_logs/stage2_search_audit.md`.
-
-### Stage 3 — Parsimonious Source-Tethered Ideation ([`idea-stage3-ideation`](skills/idea-stage3-ideation/SKILL.md))
-- Guided by three natural scientific lenses: **Literature Conflict & Confound Resolution**, **Direct-Baseline Code Surgery**, and **Optional Cross-Domain Mechanism Transfer**.
-- **Anti-Accretion Complexity Budget**: Separates prior-repo bugfixes (`Baseline-Clean`) from core novelty, caps core mechanisms at **1–2 tightly coupled primitives** (no 4-module patchwork), and mandates an immediate **component search-back** (`Web + --scan-bib --keyword`) whenever a new sub-mechanism is introduced.
-- Whenever equations, theorem conditions, or code modules are discussed, the host agent consults `papers/<slug>/index.md` and loads exact **40–120 line slices** from `source/` or `repo/`.
-- Explicitly tracks **`Explore`**, **`Challenge`**, **`Refine`**, and **`Pivot`**.
-- **Output**: `03_idea_discussion.md` (cleanly separating *Verified Facts*, *Working Assumptions*, *Clean-Baseline Prerequisites vs. Core Mechanism*, and *Ruled-Out / Pruned Modules*).
-
-### Stage 4 — Coupled Falsification Review & Pilot-First Handoff ([`idea-stage4-review-handoff`](skills/idea-stage4-review-handoff/SKILL.md))
-- **Blind Falsification Check**: Spawns a single history-isolated `Critical Reviewer Subagent` with **zero access to prior persuasion chat**, executing five sharp checks:
-  1. *Minimum Novel Core & `L2` Theorem/Appendix Scoop Check* (`--arxiv-recent` + `--scan-bib` + OpenReview; strips borrowed wrappers to test whether the remaining core is genuinely novel rather than an `A+B+C` patchwork);
-  2. *Premise, Proxy-Gap & Anti-Strawman Audit* against original `source/`, `repo/`, and `notes.md`;
-  3. *Elementary Dominance & Confound Check* (verifying complex math does not degenerate into a 2-line elementary closed form like a hypergeometric test or simple damping, and checking iso-norm / iso-plasticity controls);
-  4. *End-to-End Coupled State-Machine Simulation* (writing a Python script to test conditional gate selection bias, unobserved sparse-audit steps, competing thresholds, and analytical corner cases);
-  5. *Statistical Exchangeability (`IID` vs. `OOD`) & Pilot Falsifiability*.
-- **Two-Stage Experimental Handoff (`04_handoff.md`)**: Exports multi-dimensional readiness status, **`Gate 0` (a 1–3 hour Pilot Falsification Test with explicit Go/No-Go thresholds)**, and **literature-grounded Main Table settings** activated once `Gate 0` passes.
-
----
-
-## 🧪 Stages 5–7B: Pilot Lock, Experiment Design & Audited Execution
-
-Once ideation converges to `04_handoff.md`, ResearchFlow governs experimental validation with strict separation between **engineering autonomy** (automated SSH sync, crash recovery, profiling, plotting) and **scientific authority** (human-approved compute allocation, seed/scope trade-offs, and honest negative-result preservation):
-
-### Stage 5 — `Gate 0` Pilot Falsification & Method Lock ([`exp-stage5-pilot`](skills/exp-stage5-pilot/SKILL.md))
-- **Mandatory Pre-Pilot Compute Pause**: Confirms remote SSH or target GPU before running any model workload—never silently running heavy training on the host machine.
-- Executes algebraic unit tests, a 15s GPU smoke & throughput benchmark (`steady_ms_per_step`, `peak_vram_gb`), and a 1–3h $2\times 2$ confound-controlled pilot via [`remote_gpu.py`](scripts/remote_gpu.py), locking `GO` / `SIMPLIFY` / `PIVOT` in `05_pilot_report.md`.
-
-### Stage 6 — Subfield-Authentic Experiment & Figure Design ([`exp-stage6-design`](skills/exp-stage6-design/SKILL.md))
-- **Artifact Read-Back**: Extracts empirical conventions (benchmarks, baseline counts, `1 seed` vs. multi-seed norms, `Paper-Native` vs. `Equal-Tuning` hyperparameter fairness, and auxiliary diagnostic styles) directly from `02_paper_map.md` §5, `04_handoff.md` §4–5, and `papers/<slug>/notes.md`.
-- **Log Once, Slice Many**: Explicitly separates **Execution Runs** (GPU-consuming batches) from **Zero-GPU Derived Views** (heatmaps, trade-off decompositions, and overhead tables sliced from logged matrices/tensors), paired with a dual-track experimental data figure specification (`figures/figure_plan.md`) and a `Gate 0`-calibrated GPU-hour estimate (`06_exp_plan.md`).
-
-### Stage 7A — Coding, Conditional Equivalence & Pre-Flight Gates ([`exp-stage7a-coding`](skills/exp-stage7a-coding/SKILL.md))
-- Reuses commit-pinned `papers/<slug>/repo/` baselines, locks `eval_harness.py` via SHA-256 in `exp_manifest.json`, verifies **conditional-equivalent hardware adaptation** (`effective_batch_size` divisibility, token normalization, `optimizer.step()` hook boundaries), and passes three pre-flight gates: **mechanism-aware `test_claims.py`**, a **blind `Code-to-Claim Auditor Subagent`**, and a **10s Worst-Case Resource Probe**.
-
-### Stage 7B — Multi-GPU Execution, Triage & Deterministic Audit ([`exp-stage7b-execution`](skills/exp-stage7b-execution/SKILL.md))
-- Dispatches multi-GPU queues via [`run_matrix.py`](scripts/run_matrix.py) + [`remote_gpu.py`](scripts/remote_gpu.py) over an append-only `ledger.jsonl` (using `invalidate` tombstones to prevent mixing pre- and post-bugfix runs), renders vector `.pdf`/`.png` experimental charts from raw JSON/NPZ outputs, and enforces [`audit_exp.py`](scripts/audit_exp.py) before finalizing `07_exp_results.md`.
-
----
-
-## ⚖️ Comparison with Existing Systems
-
-| Dimension | AutoResearchClaw | autoresearch (Karpathy) | Agentic Scientist (AI-Scientist-v3) | AgentLaboratory | AI-Researcher | **ResearchFlow** |
+| Dimension | AutoResearchClaw | autoresearch (Karpathy) | Agentic Scientist (v3) | AgentLaboratory | AI-Researcher | **ResearchFlow** |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Runtime Paradigm** | Custom 23-stage Python pipeline (~71k LOC) | Host coding agent + `program.md` | Headless coding agents in Docker + `SKILL.md` | Custom Python multi-role loop | Custom Docker agent framework | **Host coding agent + Workspace Protocol (~2.2k LOC)** |
-| **Starting Point** | Broad topic string (writes unverified `goal.md` first) | Pre-built `prepare.py` + `train.py` + single metric | Pre-built `task.md` + `evaluate.py` harness | Topic + human notes | Seed `source_papers` + task spec | **Broad area OR 1–3 seed papers (zero prior hallucination)** |
-| **Literature Retrieval** | Keyword APIs, truncated screening | None (pure empirical loop) | Post-hoc citation retrieval during paper writing | ArXiv summary loop (stops at N=5 papers) | Pre-supplied seed papers + code search | **Survey-first broad + 4-angle deep (incl. counter-evidence & balanced S2/OpenAlex graph)** |
-| **Source Reading Fidelity** | 800-char truncated abstracts → 24 cards | N/A | Task files & local run memory | 50k-char PDF text with 3-step expiration | Page-up/down `.tex` browser + `Code Survey` | **Unmodified `.tex` `source/` + line-accurate `index.md` + JIT slice loading + `L0–L3` code audit** |
-| **Epistemic Hygiene** | Single prose synthesis | Metric `val_bpb` keep/reset | Executable metric + `source_contains` rubrics | Postdoc/PhD free-form dialogue | Generate-5-then-select | **4-way split (Claim / Evidence / Inference / Assumption) + `Challenge` state** |
-| **Anti-Confirmation Bias** | Non-blocking lexical Jaccard novelty score | Hard validation metric | Sealed final evaluator | Optional human retry | Self-selection prompt | **History-isolated `Critical Reviewer` subagent (scoop + confound audit)** |
+| **Runtime Architecture** | 23-stage custom pipeline (~71k LOC) | Host coding agent + `program.md` | Headless agents in Docker + `SKILL.md` | Custom multi-role Python loop | Custom Docker agent framework | **Host coding agent + Workspace Protocol (~4k LOC)** |
+| **Literature & Source Fidelity** | 800-char truncated abstract cards | None (pure optimization loop) | Post-hoc citation fetch during writeup | 5-paper arXiv summary loop | Seed papers + paged `.tex` viewer | **3-tier graph + `.bib` radar + untouched `.tex` & `repo/` (`L0–L3`)** |
+| **Experiment Design Grounding** | Hardcoded hardware prompt + `<=8` cond cap | Human pre-authors `prepare.py` | Human/task pre-authors `task.md` | Free-form dialogue | Single-model engineering plan | **Subagent-audited peer conventions + *Log Once, Slice Many* + `figure_plan.md`** |
+| **Baseline & Hardware Fairness** | Rewrites baselines; halves `bs` on OOM without `grad_accum` | Run 0 unmodified `train.py`; `TOTAL_BS` invariant | Sealed RPC evaluator + matched method deadlines | Loose single script; LLM vibe-scores stdout | Bans direct repo imports; 2-epoch dev check | **Official `repo/` surgery + 3-tier params + verified conditional equivalence** |
+| **Live Monitoring & Post-Run Audit** | Blocking foreground SSH; regex float check | `> run.log` + `grep`; `git reset` | GPU UUID leases + `.prov.json` `@evidence` | Captures stdout only (`stderr` lost) | Static LLM `Judge Agent` | **Detached SSH + zero-token Web Kanban + append-only `ledger.jsonl` + `audit_exp.py`** |
 
 ---
 
 ## ⚡ Quick Start
 
-### 1. Clone & Optional Setup
+### 1. Clone & Optional Dev Setup
 
-The CLI scripts use **100% Python 3.10+ standard library** and run out of the box with zero mandatory dependencies. Installing `pymupdf` is optional (used only as a fallback for PDF-only papers without arXiv LaTeX source):
+All core scripts under [`scripts/`](scripts/) use **100% Python 3.10+ standard library** and run out of the box with zero mandatory dependencies:
 
 ```bash
 git clone https://github.com/legend91019/ResearchFlow.git
 cd ResearchFlow
 
-# Optional: PDF fallback parser + pytest for development
+# Optional: install PyMuPDF (fallback for PDF-only papers without arXiv LaTeX source) + pytest
 pip install -e ".[pdf,dev]"
 ```
 
-*(Optional)* Set environment variables for higher academic API rate limits:
+*(Optional)* Configure academic API keys for higher rate limits:
 ```bash
-export S2_API_KEY="your_semantic_scholar_key"   # Optional: auto-falls back to OpenAlex on HTTP 429
-export OPENALEX_EMAIL="you@university.edu"      # Optional: joins OpenAlex polite pool
+export S2_API_KEY="your_semantic_scholar_key"   # Auto-falls back to OpenAlex on HTTP 429
+export OPENALEX_EMAIL="you@university.edu"      # Joins OpenAlex polite pool
 ```
 
-### 2. Open in Your Host Coding Agent & Start Chatting
+### 2. Open in Claude Code, Codex, or Antigravity
 
-Open the `ResearchFlow/` directory in **Claude Code**, **Codex**, or **Antigravity**. The host automatically reads [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) and routes to the active stage skill.
+Open the `ResearchFlow/` folder in your coding agent. It automatically loads [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) and routes to the active stage skill.
 
-#### Option A: Start from a Broad Research Area (Stages 1 → 4)
+#### Mode A — Start from a Broad Research Direction (`Stage 1 → 4`)
 ```text
-I want to explore continual learning for LLMs. My compute budget is a single 24GB GPU.
-Please create workspaces/cl_peft and start Stage 1 landscape research.
+I want to explore continual learning for LLMs with a 24GB–48GB single-GPU budget.
+Initialize workspaces/cl_peft and start Stage 1 landscape research.
 ```
 
-#### Option B: Start from 1–3 Seed Papers (Fast-Track to Stage 2)
+#### Mode B — Fast-Track from 1–3 Seed Papers (`Stage 2 → 4`)
 ```text
-I want to investigate orthogonal subspace methods in continual PEFT, starting from O-LoRA (arXiv:2310.14152)
-and InfLoRA (arXiv:2404.00228). Compute limit: single RTX 4090.
-Initialize workspaces/ortho_cl and jump directly into Stage 2 4-angle deep search and paper mapping.
+Starting from O-LoRA (arXiv:2310.14152) and InfLoRA (arXiv:2404.00228), initialize workspaces/ortho_cl
+and jump directly into Stage 2 4-angle deep search and L1–L3 paper mapping.
 ```
 
-#### Resuming or Clearing Context Between Stages
-Because every milestone is persisted cleanly to `workspaces/<project>/`, you can run `/compact` or open a brand-new chat window at any stage boundary:
+#### Transitioning into Pilot, Design & Execution (`Stage 5 → 7B`)
+> **Context Hygiene Tip**: Open a fresh chat window (or run `/compact`) when transitioning from Stage 4 (`04_handoff.md`) into Stage 5/6, and again before Stage 7A coding!
 ```text
-Read workspaces/ortho_cl/01_scope.md and workspaces/ortho_cl/02_paper_map.md,
-and let's continue Stage 3 ideation.
+Read workspaces/ortho_cl/04_handoff.md and follow ResearchFlow Stage 5 to prepare the Gate 0 pilot.
+```
+
+---
+
+## 🛠️ Zero-Dependency CLI Toolkit
+
+Every tool in [`scripts/`](scripts/) is standalone, deterministic, and built strictly on Python's standard library:
+
+```bash
+# 1. Literature Retrieval: 3-tier S2+OpenAlex graph, 2-hop .bib co-citation radar, zero-lag arXiv stream
+python scripts/cite_graph.py 2310.14152 --direction both --limit 40 --out search_logs/olora.md
+python scripts/cite_graph.py --scan-bib workspaces/demo --year-min 2024 --limit 25
+python scripts/cite_graph.py --arxiv-recent "continual learning lora" --days 30
+
+# 2. Lossless Paper Unpacking: unmodified .tex source + file:line index.md + shallow official repo clone
+python scripts/fetch_paper.py --arxiv 2404.00228 --workspace workspaces/demo --slug 2024_inflora \
+  --repo https://github.com/liangyanshuo/InfLoRA --role "Direct Baseline"
+
+# 3. Remote GPU Management: zero-escape SSH key bootstrap, 4D hardware/tmpfs probe, stdin exec, tar sync
+python scripts/remote_gpu.py init --workspace workspaces/demo --ssh "ssh -p 51263 root@gpu.host" --password-env RF_PW
+python scripts/remote_gpu.py probe --workspace workspaces/demo
+python scripts/remote_gpu.py exec --workspace workspaces/demo --script experiments/quick_smoke.py --gpu 0
+python scripts/remote_gpu.py push --workspace workspaces/demo --src experiments
+python scripts/remote_gpu.py launch --workspace workspaces/demo --job-id main_exp --workdir experiments \
+  --cmd "python run_matrix.py run --manifest exp_manifest.json --ledger results/ledger.jsonl --gpus 0,1"
+
+# 4. Zero-Token Live Web Kanban (http://127.0.0.1:8765) & Post-Run Provenance Auditor
+python scripts/exp_dashboard.py --workspace workspaces/demo --job-id main_exp --port 8765
+python scripts/audit_exp.py --manifest workspaces/demo/experiments/exp_manifest.json \
+  --ledger workspaces/demo/experiments/results/ledger.jsonl --results-md workspaces/demo/07_exp_results.md
 ```
 
 <details>
-<summary>📂 <b>Click to inspect a generated workspace directory & <code>index.md</code> example</b></summary>
+<summary>📂 <b>Click to inspect a full generated workspace directory layout</b></summary>
 
 ```text
 workspaces/ortho_cl/
 ├── 01_scope.md                         # Taxonomy, compute envelope, locked A→B→C branch
-├── 02_paper_map.md                     # Temporal lineage, mechanism/confound matrix, main-table consensus
-├── 03_idea_discussion.md               # Verified facts vs. working assumptions, candidate spec, ruled-out ideas
-├── 04_handoff.md                       # Finalized method coordinates & main-table experimental setup
+├── 02_paper_map.md                     # Temporal lineage, confound matrix, benchmark index
+├── 03_idea_discussion.md               # Verified facts vs. assumptions, minimal novel core
+├── 04_handoff.md                       # Code coordinates, Gate 0 spec & Main Table targets
+├── 05_pilot_report.md                  # Gate 0 empirical verdict (GO / SIMPLIFY / PIVOT) & ms/step baseline
+├── 06_exp_plan.md                      # Plain-language guide, Execution Runs vs. Derived Views, 3-tier fairness
+├── 07_exp_results.md                   # Audited results with <!-- @evidence:... --> provenance tags
+├── figures/
+│   ├── figure_plan.md                  # Dual-track chart specification & JSON field bindings
+│   └── fig_e1.pdf / fig_e1.png         # Deterministically rendered vector & raster data plots
+├── experiments/
+│   ├── exp_manifest.json               # Locked condition queue & evaluator SHA-256
+│   ├── eval_harness.py                 # Read-only split & metric evaluator
+│   ├── runner.py                       # Shared conditional-equivalent loop & OOM backoff
+│   ├── methods/                        # Isolated per-baseline & proposed plugin modules
+│   ├── plots/                          # Zero-hardcoding matplotlib table & figure builders
+│   ├── tests/test_claims.py            # Mechanism triggers, real-schema checks & mock-OOM tests
+│   └── results/ledger.jsonl            # Append-only run ledger with commit & invalidation history
 ├── search_logs/
-│   ├── stage2_search_audit.md          # 4-angle queries + Borderline Excluded (Top 5-10) near-miss audit
-│   └── critical_review.md              # History-isolated 5-question falsification & scoop report
+│   ├── stage2_search_audit.md          # 4-angle queries + Borderline Excluded near-miss table
+│   ├── critical_review.md              # Stage 4 blind falsification report
+│   ├── stage6_exp_conventions.md       # Subagent-verified peer dataset/GPU/protocol dossier
+│   └── stage7a_code_audit.md           # Final-lock Code-to-Claim blind audit report
 └── papers/
-    └── 2023_olora/
-        ├── source/                     # Unmodified original arXiv .tex, macros.tex, tables/, .bib
-        ├── repo/                       # Shallow-cloned official GitHub repo (commit SHA recorded)
-        ├── metadata.json               # Title, authors, year, SHA-256 digests, pinned repo commit
-        ├── index.md                    # Exact file:Lstart-Lend map for macros, sections, tables, equations
-        └── notes.md                    # 4-way epistemic reading dossier (L1 / L2 / L3)
-```
-
-Sample excerpt from an auto-generated `papers/<slug>/index.md`:
-```markdown
-## 1. Custom Macros & Notation Definitions (Read Before Interpreting Equations)
-- `source/macros.tex:L2-L38` (19 definitions, e.g. `\proj`, `\subspace`, `\orthloss`)
-
-## 2. Section & Appendix Line Index (Use Line Ranges for JIT Reading)
-- **Introduction** — `source/sections/intro.tex:L1-L74`
-- **Proposed Method** — `source/sections/method.tex:L1-L18`
-  - **Orthogonal Subspace Constraint** — `source/sections/method.tex:L19-L96`
-- **Appendix** — `source/appendix.tex:L1-L142`
-
-## 3. Experimental & Summary Tables
-- `source/tables/main_results.tex:L1-L34` (`tab:main`): Main comparison across 15 continual learning benchmarks.
+    └── 2024_inflora/
+        ├── source/                     # Untouched arXiv .tex, macros.tex, appendix
+        ├── repo/                       # Commit-pinned official GitHub repository
+        ├── index.md                    # Exact file:Lstart-Lend navigation map
+        └── notes.md                    # 4-way epistemic reading dossier (L1–L3)
 ```
 
 </details>
 
 ---
 
-## 🛠️ CLI Utilities
-
-Both helper scripts under [`scripts/`](scripts/) can also be run standalone from any terminal:
-
-### 1. `scripts/cite_graph.py` — 3-Tier Citation Graph, Local `.bib` Radar & Zero-Lag arXiv Stream
-Merges **Semantic Scholar** and **OpenAlex** with 3-tier temporal balancing (latest preprints `C` + 1–2 year venue backbone `B_recent` + foundational classics `B_early`) and optional `--before-date YYYY-MM-DD` cutoffs for retrospective backtesting. Also provides `--scan-bib` (zero-API 2-hop co-citation scan over downloaded `.bib` files) and `--arxiv-recent` (direct `export.arxiv.org` preprint stream).
-
-```bash
-# 1) Bidirectional 3-tier citation graph
-python scripts/cite_graph.py 2310.14152 \
-  --direction both \
-  --limit 40 \
-  --with-abstracts \
-  --out workspaces/demo/search_logs/olora_graph.md \
-  --json-out workspaces/demo/search_logs/olora_graph.json
-
-# 2) Zero-API 2-hop co-citation scan across local papers/*/source/*.bib
-python scripts/cite_graph.py --scan-bib workspaces/demo --keyword "subspace|spectral" --limit 25
-
-# 3) Zero-lag arXiv stream for the last 30 days
-python scripts/cite_graph.py --arxiv-recent "continual learning lora" --categories "cs.LG,cs.CL" --days 30
-```
-
-### 2. `scripts/fetch_paper.py` — Lossless Source Unpacker & Line-Range Indexer
-Downloads arXiv e-print `.tar.gz` / `.gz` archives (with path-traversal and SSRF guards), keeps `source/` byte-for-byte untouched, resolves multi-file `\input` / `\include` trees, indexes custom macros, sections, tables, theorems, and labeled equations with exact `file:Lstart-Lend` coordinates, and optionally shallow-clones the official repository.
-
-```bash
-python scripts/fetch_paper.py \
-  --arxiv 2310.06762 \
-  --workspace workspaces/demo \
-  --slug 2023_olora \
-  --repo https://github.com/cmnfriend/O-LoRA \
-  --with-pdf \
-  --role "Direct Baseline"
-```
-
----
-
-## 📂 Repository Structure
-
-```text
-ResearchFlow/
-├── AGENTS.md                        # Authoritative Research Workspace Protocol (Codex / Antigravity / OpenCode)
-├── CLAUDE.md                        # Claude Code entrypoint referencing AGENTS.md
-├── docs/
-│   ├── README_CN.md                 # Simplified Chinese documentation
-│   └── assets/banner.svg            # Vector architecture banner
-├── skills/                          # Stage-scoped skills loaded on demand
-│   ├── idea-stage1-landscape/       # Stage 1: Survey-first discovery & taxonomy scoping
-│   ├── idea-stage2-literature-map/  # Stage 2: 4-angle deep search, near-miss audit & L0–L3 paper mapping
-│   ├── idea-stage3-ideation/        # Stage 3: JIT source/code slice inspection & parsimonious ideation
-│   ├── idea-stage4-review-handoff/  # Stage 4: Blind critical review & Gate 0 pilot-first handoff
-│   ├── exp-stage5-pilot/            # Stage 5: Compute-gated Gate 0 pilot & method lock
-│   ├── exp-stage6-design/           # Stage 6: Subfield-grounded experiment & data-figure blueprint
-│   ├── exp-stage7a-coding/          # Stage 7A: Baseline reuse, conditional-equivalent coding & 3-gate preflight
-│   └── exp-stage7b-execution/       # Stage 7B: Multi-GPU queue, 3-class triage, plotting & deterministic audit
-├── scripts/                         # Zero-dependency deterministic helper CLIs
-│   ├── cite_graph.py                # 3-tier citation graph, .bib radar & zero-lag arXiv stream
-│   ├── fetch_paper.py               # Unmodified arXiv/PDF fetcher, LaTeX indexer & repo cloner
-│   ├── remote_gpu.py                # Zero-escape SSH bootstrap, hardware probe, tar sync & job status
-│   ├── run_matrix.py                # Multi-GPU experiment queue & append-only ledger manager
-│   └── audit_exp.py                 # Coverage, provenance, integrity & anti-hardcoding auditor
-├── templates/                       # Clean Markdown schemas for 01–07 state files, figures, notes & audits
-├── tests/                           # Unit, fault-injection & protocol integrity test suite
-└── workspaces/                      # Local per-topic research workspaces (git-ignored by default)
-```
-
----
-
 ## 🗺️ Roadmap
 
-ResearchFlow is being developed progressively across the four stages of the AI research lifecycle:
-
 - [x] **Phase I — Evidence-Grounded Ideation & Literature Mapping (`v0.1`–`v0.2`)**
-  - Survey-first taxonomy scoping, 3-tier citation graph + `.bib` co-citation radar + zero-lag arXiv stream, anti-accretion ideation, coupled numerical falsification review, and `Gate 0` pilot-first handoff.
-- [x] **Phase II — Consensus Experimental & Data-Figure Protocol Design (`v0.3`)**
-  - Compute-gated `Gate 0` pilot locking, Stage 1–4 convention read-back, *Log Once, Slice Many* run/view separation, dual-track `figure_plan.md`, and `Gate 0`-calibrated GPU-hour negotiation.
-- [x] **Phase III — Conditional-Equivalent Coding, Multi-GPU Execution & Fidelity Audits (`v0.3`)**
-  - Zero-dependency remote SSH sync/inspection (`remote_gpu.py`), mechanism-aware `test_claims.py` + worst-case VRAM probes, multi-GPU append-only ledger queues (`run_matrix.py`), and deterministic coverage/provenance/plotting verification (`audit_exp.py`).
+- [x] **Phase II — Pilot Falsification & Subfield-Audited Experiment Design (`v0.3`)**
+- [x] **Phase III — 4D-Guarded Modular Execution, Live Kanban & Provenance Audits (`v0.3.1`)**
 - [ ] **Phase IV — Scientific Synthesis, Architecture Diagrams & Evidence-Bound Paper Writing (`v0.4`)**
-  - Conceptual/architecture diagram authoring and full LaTeX manuscript generation strictly bound to verified `ledger.jsonl` metrics and primary literature sources.
 
 ---
 
@@ -373,10 +285,8 @@ pytest -v
 
 ---
 
-## 📜 Acknowledgements & References
+## 📜 Acknowledgements & License
 
-ResearchFlow's design is informed by hands-on analysis and critical comparison of open-source autonomous research systems, including [AutoResearchClaw](https://github.com/aiming-lab/AutoResearchClaw), [autoresearch](https://github.com/karpathy/autoresearch), [The Agentic Scientist (AI-Scientist-v3)](https://github.com/SakanaAI/AI-Scientist-v3), [AgentLaboratory](https://github.com/SamuelSchmidgall/AgentLaboratory), and [AI-Researcher](https://github.com/HKUDS/AI-Researcher).
-
-## 📄 License
+Informed by source-level analysis and real-world benchmarking alongside [AutoResearchClaw](https://github.com/aiming-lab/AutoResearchClaw), [autoresearch](https://github.com/karpathy/autoresearch), [The Agentic Scientist (AI-Scientist-v3)](https://github.com/SakanaAI/AI-Scientist-v3), [AgentLaboratory](https://github.com/SamuelSchmidgall/AgentLaboratory), and [AI-Researcher](https://github.com/HKUDS/AI-Researcher).
 
 Released under the [MIT License](LICENSE).

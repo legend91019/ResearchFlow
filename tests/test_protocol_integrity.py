@@ -18,6 +18,7 @@ def test_required_protocol_files_exist() -> None:
         "scripts/fetch_paper.py",
         "scripts/remote_gpu.py",
         "scripts/run_matrix.py",
+        "scripts/exp_dashboard.py",
         "scripts/audit_exp.py",
         "templates/01_scope.md",
         "templates/02_paper_map.md",
@@ -85,8 +86,8 @@ def test_v03_experiment_phase_invariants() -> None:
     s7a = (REPO_ROOT / "skills/exp-stage7a-coding/SKILL.md").read_text(encoding="utf-8")
     s7b = (REPO_ROOT / "skills/exp-stage7b-execution/SKILL.md").read_text(encoding="utf-8")
 
-    assert "工程自主权与科学决策权严格分离" in agents
+    assert "工程自主权与科学决策权严格分离" in agents and "Inspect-Only" in agents
     assert "严禁未经用户明确授权直接在宿主本机" in s5
-    assert "02_paper_map.md" in s6 and "figure_plan.md" in s6 and "Derived Views" in s6
-    assert "test_claims.py" in s7a and "Worst-Case Resource Probe" in s7a
-    assert "run_matrix.py" in s7b and "audit_exp.py" in s7b and "invalidate" in s7b
+    assert "stage6_exp_conventions.md" in s6 and "figure_plan.md" in s6 and "Derived Views" in s6
+    assert "test_claims.py" in s7a and "worst_case_peak_vram_gb" in s7a and "remote_gpu.py exec" in s7a
+    assert "run_matrix.py" in s7b and "exp_dashboard.py" in s7b and "audit_exp.py" in s7b and "invalidate" in s7b
